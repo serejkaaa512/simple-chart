@@ -1,0 +1,6 @@
+[package]
+name = "simple_graph"
+version = "0.1.0"
+authors = ["serejkaaa512 <5125402@mail.ru>"]
+
+[dependencies]
