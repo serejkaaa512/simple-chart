@@ -1,15 +1,9 @@
 use std::error::Error;
 use std::f64;
+use byteorder::{LittleEndian, WriteBytesExt};
+use BitMap;
 
-
-#[derive(Debug)]
-pub enum GraphError {
-    DataError,
-    NegativeLogarithm,
-    NegativeSquareRoot,
-}
-
-pub type GraphResult = Result<u64, GraphError>;
+pub type GraphResult = Result<(), Box<Error>>;
 
 pub struct Point {
     pub x: f64,
@@ -26,11 +20,20 @@ pub fn create<'a, T>(iter: T, path: &'a str, width: usize, height: usize) -> Gra
     where T: Iterator<Item = &'a Point> + Clone
 {
     let graph = convert_to_display_points(iter, width, height);
-
-    // let bmp = pack_into_bmp(graph);
-    // save_file_on_disc(bmp, path)
-    Ok(0)
+    let mut bmp = BitMap::new();
+    let picture = convert_display_points_to_array(graph);
+    bmp = bmp.add_picture(picture);
+    let byte_array = bmp.to_array();
+    try!(save_file_on_disc(byte_array, path));
+    Ok(())
 }
+
+fn convert_display_points_to_array(points: Iterator<Item = DisplayPoint>) -> [u8] {}
+
+fn save_file_on_disc<'a>(bmp: Box<[u8]>, path: &'a str) -> GraphResult {
+    unimplemented!();
+}
+
 
 fn convert_to_display_points<'b, 'a: 'b, T>(iter: T,
                                             width: usize,
@@ -92,7 +95,7 @@ fn can_create_array() {
     let width = 9;
     let height = 9;
 
-    let display_points = convert_to_display_points(p.iter(), width, height).unwrap();
+    let display_points = convert_to_display_points(p.iter(), width, height);
 
     for p in display_points {
         println!("x: {}, y: {}", p.x, p.y);

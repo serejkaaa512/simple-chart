@@ -1,4 +1,4 @@
-#[macro_export] 
+#[macro_export]
 macro_rules! formula {
     ( y($x:ident): $sty:ty = $form:expr, x = [$min:expr, $max:expr; $step:expr] ) 
     => 
@@ -16,7 +16,7 @@ macro_rules! formula {
 
             #[inline]
             fn next(&mut self) -> Option<($sty,$sty)> {
-                if self.current_x < self.max_x {
+                if self.current_x <= self.max_x {
                     let x = self.current_x;
                     self.current_x = self.current_x + self.step_x;
                     Some((x, (self.f)(x)))
