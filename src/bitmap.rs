@@ -15,9 +15,20 @@ impl BitMap {
         }
     }
 
-    pub fn add_picture(self, pic: Vec<u8>) -> Self {
-        let header = self.header.set_lenght(pic.len() as u32);
-        let info = self.info.set_size(header.file_lenght);
+    pub fn add_picture(self, pic: Vec<u8>, width: usize, height: usize) -> Self {
+        let header_len = BitMapHeader::len();
+        let info_len = BitMapInfo::len();
+        let file_lenght = (pic.len() as u32) + header_len + info_len;
+        let pixels_data_offset = header_len + info_len;
+
+        let header = self.header
+                         .set_lenght(file_lenght as u32)
+                         .set_data_offset(pixels_data_offset as u32);
+
+        let info = self.info
+                       .set_width(width as i32)
+                       .set_height(height as i32);
+
         BitMap {
             header: header,
             info: info,
@@ -38,7 +49,7 @@ struct BitMapHeader {
     little_indian: u16,
     file_lenght: u32,
     reserved: u32,
-    fOffBitsfield: u32,
+    f_off_bitsfield: u32,
 }
 
 impl BitMapHeader {
@@ -47,20 +58,29 @@ impl BitMapHeader {
             little_indian: 0x4d42,
             file_lenght: 0u32,
             reserved: 0u32,
-            fOffBitsfield: 0u32,
+            f_off_bitsfield: 0u32,
         }
     }
 
+    fn len() -> u32 {
+        14
+    }
+
     fn set_lenght(self, lenght: u32) -> Self {
-        BitMapHeader { file_lenght: lenght, .. self }
+        BitMapHeader { file_lenght: lenght, ..self }
+    }
+
+
+    fn set_data_offset(self, offset: u32) -> Self {
+        BitMapHeader { f_off_bitsfield: offset, ..self }
     }
 
     fn to_vec(&self) -> Vec<u8> {
         let mut header = vec![]; // V5
-        header.write_u16::<LittleEndian>(self.little_indian);
-        header.write_u32::<LittleEndian>(self.file_lenght);
-        header.write_u32::<LittleEndian>(self.reserved);
-        header.write_u32::<LittleEndian>(self.fOffBitsfield);
+        header.write_u16::<LittleEndian>(self.little_indian).unwrap();
+        header.write_u32::<LittleEndian>(self.file_lenght).unwrap();
+        header.write_u32::<LittleEndian>(self.reserved).unwrap();
+        header.write_u32::<LittleEndian>(self.f_off_bitsfield).unwrap();
         header
     }
 }
@@ -74,98 +94,114 @@ pub struct BitMapInfo {
     bitcount: u16,
     compression: u32,
     sizeimage: u32,
-    xpelsPerMeter: i32,
-    ypelsPerMeter: i32,
-    clrUsed: u32,
-    clrImportant: u32,
+    xpels_per_meter: i32,
+    ypels_per_meter: i32,
+    clr_used: u32,
+    clr_important: u32,
 
-    redMask: u32,
-    greenMask: u32,
-    blueMask: u32,
-    alphaMask: u32,
-    cSType: u32,
+    red_mask: u32,
+    green_mask: u32,
+    blue_mask: u32,
+    alpha_mask: u32,
+    c_stype: u32,
 
-    cIEXYZTRIPLE: Vec<u8>,
+    c_iexyztriple: Vec<u8>,
 
-    gammaRed: u32,
-    gammaGreen: u32,
-    gammaBlue: u32,
+    gamma_red: u32,
+    gamma_green: u32,
+    gamma_blue: u32,
 
     intent: u32,
-    profileData: u32,
-    profileSize: u32,
+    profile_data: u32,
+    profile_size: u32,
     reserved: u32,
 }
 
 impl BitMapInfo {
     fn new() -> Self {
         BitMapInfo {
-            size: 0u32,
+            size: 124u32,
             width: 0i32,
             height: 0i32,
             planes: 1u16,
             bitcount: 32u16,
             compression: 0u32,
             sizeimage: 0u32,
-            xpelsPerMeter: 0i32,
-            ypelsPerMeter: 0i32,
-            clrUsed: 0u32,
-            clrImportant: 0u32,
+            xpels_per_meter: 3780i32, //96 dpi
+            ypels_per_meter: 3780i32, //96 dpi
+            clr_used: 0u32,
+            clr_important: 0u32,
 
-            redMask: 0u32,
-            greenMask: 0u32,
-            blueMask: 0u32,
-            alphaMask: 0u32,
-            cSType: 0u32,
+            red_mask: 0u32,
+            green_mask: 0u32,
+            blue_mask: 0u32,
+            alpha_mask: 0u32,
+            c_stype: 0u32,
 
-            cIEXYZTRIPLE: vec![0u8; 36],
+            c_iexyztriple: vec![0u8; 36],
+            gamma_red: 0u32,
+            gamma_green: 0u32,
+            gamma_blue: 0u32,
 
-            gammaRed: 0u32,
-            gammaGreen: 0u32,
-            gammaBlue: 0u32,
-
-            intent: 0u32,
-            profileData: 0u32,
-            profileSize: 0u32,
+            intent: 4u32, // Picture
+            profile_data: 0u32,
+            profile_size: 0u32,
             reserved: 0u32,
         }
     }
 
-    fn set_size(self, size: u32) -> Self {
-        let v = self.cIEXYZTRIPLE.clone();
-        BitMapInfo { size: size, cIEXYZTRIPLE: v, .. self }
-    }
-
     fn to_vec(&self) -> Vec<u8> {
         let mut bmp_info = vec![]; // V5
-        bmp_info.write_u32::<LittleEndian>(self.size); // size
-        bmp_info.write_i32::<LittleEndian>(self.width); // width
-        bmp_info.write_i32::<LittleEndian>(self.height); // height
-        bmp_info.write_u16::<LittleEndian>(self.planes); // planes
-        bmp_info.write_u16::<LittleEndian>(self.bitcount); // bitcount 32
-        bmp_info.write_u32::<LittleEndian>(self.compression); // compression 0 - BI_RGB
-        bmp_info.write_u32::<LittleEndian>(self.sizeimage); // sizeimage
-        bmp_info.write_i32::<LittleEndian>(self.xpelsPerMeter); // XpelsPerMeter
-        bmp_info.write_i32::<LittleEndian>(self.ypelsPerMeter); // YpelsPerMeter
-        bmp_info.write_u32::<LittleEndian>(self.clrUsed); // ClrUsed
-        bmp_info.write_u32::<LittleEndian>(self.clrImportant); // ClrImportant
+        bmp_info.write_u32::<LittleEndian>(self.size).unwrap(); // size
+        bmp_info.write_i32::<LittleEndian>(self.width).unwrap(); // width
+        bmp_info.write_i32::<LittleEndian>(self.height).unwrap(); // height
+        bmp_info.write_u16::<LittleEndian>(self.planes).unwrap(); // planes
+        bmp_info.write_u16::<LittleEndian>(self.bitcount).unwrap(); // bitcount 32
+        bmp_info.write_u32::<LittleEndian>(self.compression).unwrap(); // compression 0 - BI_RGB
+        bmp_info.write_u32::<LittleEndian>(self.sizeimage).unwrap(); // sizeimage
+        bmp_info.write_i32::<LittleEndian>(self.xpels_per_meter).unwrap(); // XpelsPerMeter
+        bmp_info.write_i32::<LittleEndian>(self.ypels_per_meter).unwrap(); // YpelsPerMeter
+        bmp_info.write_u32::<LittleEndian>(self.clr_used).unwrap(); // ClrUsed
+        bmp_info.write_u32::<LittleEndian>(self.clr_important).unwrap(); // ClrImportant
 
-        bmp_info.write_u32::<LittleEndian>(self.redMask); // RedMask
-        bmp_info.write_u32::<LittleEndian>(self.greenMask); // GreenMask
-        bmp_info.write_u32::<LittleEndian>(self.blueMask); // BlueMask
-        bmp_info.write_u32::<LittleEndian>(self.alphaMask); // AlphaMask
-        bmp_info.write_u32::<LittleEndian>(self.cSType); // CSType
+        bmp_info.write_u32::<LittleEndian>(self.red_mask).unwrap(); // RedMask
+        bmp_info.write_u32::<LittleEndian>(self.green_mask).unwrap(); // GreenMask
+        bmp_info.write_u32::<LittleEndian>(self.blue_mask).unwrap(); // BlueMask
+        bmp_info.write_u32::<LittleEndian>(self.alpha_mask).unwrap(); // AlphaMask
+        bmp_info.write_u32::<LittleEndian>(self.c_stype).unwrap(); // CSType
 
-        bmp_info.extend_from_slice(&self.cIEXYZTRIPLE);                  // CIEXYZTRIPLE
+        bmp_info.extend_from_slice(&self.c_iexyztriple);                  // CIEXYZTRIPLE
 
-        bmp_info.write_u32::<LittleEndian>(self.gammaRed); // GammaRed
-        bmp_info.write_u32::<LittleEndian>(self.gammaGreen); // GammaGreen
-        bmp_info.write_u32::<LittleEndian>(self.gammaBlue); // GammaBlue
+        bmp_info.write_u32::<LittleEndian>(self.gamma_red).unwrap(); // GammaRed
+        bmp_info.write_u32::<LittleEndian>(self.gamma_green).unwrap(); // GammaGreen
+        bmp_info.write_u32::<LittleEndian>(self.gamma_blue).unwrap(); // GammaBlue
 
-        bmp_info.write_u32::<LittleEndian>(self.intent); // Intent
-        bmp_info.write_u32::<LittleEndian>(self.profileData); // ProfileData
-        bmp_info.write_u32::<LittleEndian>(self.profileSize); // ProfileSize
-        bmp_info.write_u32::<LittleEndian>(self.reserved); // Reserved
+        bmp_info.write_u32::<LittleEndian>(self.intent).unwrap(); // Intent
+        bmp_info.write_u32::<LittleEndian>(self.profile_data).unwrap(); // ProfileData
+        bmp_info.write_u32::<LittleEndian>(self.profile_size).unwrap(); // ProfileSize
+        bmp_info.write_u32::<LittleEndian>(self.reserved).unwrap(); // Reserved
         bmp_info
+    }
+
+    fn len() -> u32 {
+        124
+    }
+
+    fn set_width(self, width: i32) -> Self {
+        let v = self.c_iexyztriple.clone();
+        BitMapInfo {
+            width: width,
+            c_iexyztriple: v,
+            ..self
+        }
+    }
+
+    fn set_height(self, height: i32) -> Self {
+        let v = self.c_iexyztriple.clone();
+        BitMapInfo {
+            height: height,
+            c_iexyztriple: v,
+            ..self
+        }
     }
 }

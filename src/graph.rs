@@ -37,7 +37,7 @@ pub fn create<'a, T>(iter: T, path: &'a str, width: usize, height: usize) -> Gra
     let graph = convert_to_display_points(iter, width, height);
     let mut bmp = BitMap::new();
     let picture = convert_display_points_to_array(graph, width, height);
-    bmp = bmp.add_picture(picture);
+    bmp = bmp.add_picture(picture, width, height);
     let byte_array = bmp.to_vec();
     try!(save_file_on_disc(byte_array, Path::new(&*path)));
     Ok(())
@@ -47,7 +47,7 @@ fn convert_display_points_to_array<'a>(points: Box<Iterator<Item = DisplayPoint>
                                        width: usize,
                                        height: usize)
                                        -> Vec<u8> {
-    let mut pixs = vec![0u8; width * height];
+    let mut pixs = vec![0xFFu8; width * 4 * height * 4 ];
     for p in points {
         let i = p.y * width * 4 + p.x * 4;
         pixs[i + 0] = POINTS_COLOR.b;
@@ -112,7 +112,7 @@ fn it_works() {
     let p = vec![Point { x: 1f64, y: 1f64 },
                  Point { x: 2f64, y: 2f64 },
                  Point { x: 3f64, y: 3f64 }];
-    create(p.iter(), "./example/graph.bmp", 740, 480);
+    let _ = create(p.iter(), "/example/graph.bmp", 740, 480);
 }
 
 
