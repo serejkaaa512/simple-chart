@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::f64;
-use byteorder::{LittleEndian, WriteBytesExt};
+use std::io::prelude::*;
+use std::fs::File;
+use std::path::Path;
 use BitMap;
 
 pub type GraphResult = Result<(), Box<Error>>;
@@ -15,23 +17,51 @@ pub struct DisplayPoint {
     pub y: usize,
 }
 
+struct Color {
+    r: u8,
+    g: u8,
+    b: u8,
+    a: u8,
+}
+
+const POINTS_COLOR: Color = Color {
+    r: 0,
+    g: 0,
+    b: 0xff,
+    a: 0,
+};
 
 pub fn create<'a, T>(iter: T, path: &'a str, width: usize, height: usize) -> GraphResult
     where T: Iterator<Item = &'a Point> + Clone
 {
     let graph = convert_to_display_points(iter, width, height);
     let mut bmp = BitMap::new();
-    let picture = convert_display_points_to_array(graph);
+    let picture = convert_display_points_to_array(graph, width, height);
     bmp = bmp.add_picture(picture);
-    let byte_array = bmp.to_array();
-    try!(save_file_on_disc(byte_array, path));
+    let byte_array = bmp.to_vec();
+    try!(save_file_on_disc(byte_array, Path::new(&*path)));
     Ok(())
 }
 
-fn convert_display_points_to_array(points: Iterator<Item = DisplayPoint>) -> [u8] {}
+fn convert_display_points_to_array<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>,
+                                       width: usize,
+                                       height: usize)
+                                       -> Vec<u8> {
+    let mut pixs = vec![0u8; width * height];
+    for p in points {
+        let i = p.y * width * 4 + p.x * 4;
+        pixs[i + 0] = POINTS_COLOR.b;
+        pixs[i + 1] = POINTS_COLOR.g;
+        pixs[i + 2] = POINTS_COLOR.r;
+        pixs[i + 3] = POINTS_COLOR.a;
+    }
+    pixs
+}
 
-fn save_file_on_disc<'a>(bmp: Box<[u8]>, path: &'a str) -> GraphResult {
-    unimplemented!();
+fn save_file_on_disc<'a>(bmp: Vec<u8>, path: &Path) -> GraphResult {
+    let mut file = try!(File::create(&path));
+    try!(file.write_all(&bmp));
+    Ok(())
 }
 
 

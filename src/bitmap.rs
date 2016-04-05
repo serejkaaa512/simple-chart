@@ -15,9 +15,9 @@ impl BitMap {
         }
     }
 
-    pub fn add_picture(&self, pic: [u8]) -> Self {
-        let header = self.header.set_lenght(pic.lenght);
-        let info = self.info.set_size(header.size());
+    pub fn add_picture(self, pic: Vec<u8>) -> Self {
+        let header = self.header.set_lenght(pic.len() as u32);
+        let info = self.info.set_size(header.file_lenght);
         BitMap {
             header: header,
             info: info,
@@ -25,11 +25,11 @@ impl BitMap {
         }
     }
 
-    pub fn to_array(&self) -> [u8] {
-        let bitmap = vec![]; // V5
-        bitmap.append(self.header);
-        bitmap.append(self.info);
-        bitmap.append(self.array);
+    pub fn to_vec(&self) -> Vec<u8> {
+        let mut bitmap = vec![]; // V5
+        bitmap.extend_from_slice(&self.header.to_vec());
+        bitmap.extend_from_slice(&self.info.to_vec());
+        bitmap.extend_from_slice(&self.array);
         bitmap
     }
 }
@@ -51,12 +51,12 @@ impl BitMapHeader {
         }
     }
 
-    fn set_lenght(&self, lenght: u32) -> Self {
-        BitMapHeader { file_lenght: lenght, ..self }
+    fn set_lenght(self, lenght: u32) -> Self {
+        BitMapHeader { file_lenght: lenght, .. self }
     }
 
-    fn to_array(&self) -> [u8] {
-        let header = vec![]; // V5
+    fn to_vec(&self) -> Vec<u8> {
+        let mut header = vec![]; // V5
         header.write_u16::<LittleEndian>(self.little_indian);
         header.write_u32::<LittleEndian>(self.file_lenght);
         header.write_u32::<LittleEndian>(self.reserved);
@@ -85,7 +85,7 @@ pub struct BitMapInfo {
     alphaMask: u32,
     cSType: u32,
 
-    cIEXYZTRIPLE: [u8; 36],
+    cIEXYZTRIPLE: Vec<u8>,
 
     gammaRed: u32,
     gammaGreen: u32,
@@ -118,7 +118,7 @@ impl BitMapInfo {
             alphaMask: 0u32,
             cSType: 0u32,
 
-            cIEXYZTRIPLE: [0u8; 36],
+            cIEXYZTRIPLE: vec![0u8; 36],
 
             gammaRed: 0u32,
             gammaGreen: 0u32,
@@ -131,12 +131,13 @@ impl BitMapInfo {
         }
     }
 
-    fn set_size(&self, size: u32) -> Self {
-        BitMapInfo { size: size, ..self }
+    fn set_size(self, size: u32) -> Self {
+        let v = self.cIEXYZTRIPLE.clone();
+        BitMapInfo { size: size, cIEXYZTRIPLE: v, .. self }
     }
 
-    fn to_array(&self) -> [u8] {
-        let bmp_info = vec![]; // V5
+    fn to_vec(&self) -> Vec<u8> {
+        let mut bmp_info = vec![]; // V5
         bmp_info.write_u32::<LittleEndian>(self.size); // size
         bmp_info.write_i32::<LittleEndian>(self.width); // width
         bmp_info.write_i32::<LittleEndian>(self.height); // height
@@ -155,15 +156,7 @@ impl BitMapInfo {
         bmp_info.write_u32::<LittleEndian>(self.alphaMask); // AlphaMask
         bmp_info.write_u32::<LittleEndian>(self.cSType); // CSType
 
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[0]); // CIEXYZTRIPLE
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[1]); //
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[2]); //
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[3]); //
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[4]); //
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[5]); //
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[6]); //
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[7]); //
-        bmp_info.write_u32::<LittleEndian>(self.cIEXYZTRIPLE[8]); //
+        bmp_info.extend_from_slice(&self.cIEXYZTRIPLE);                  // CIEXYZTRIPLE
 
         bmp_info.write_u32::<LittleEndian>(self.gammaRed); // GammaRed
         bmp_info.write_u32::<LittleEndian>(self.gammaGreen); // GammaGreen
