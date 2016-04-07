@@ -12,6 +12,12 @@ pub struct Point {
     pub y: f64,
 }
 
+impl From<(f64, f64)> for Point{
+    fn from(t: (f64, f64)) -> Self {
+        Point { x: t.0, y: t.1 }
+    }
+}
+
 pub struct DisplayPoint {
     pub x: usize,
     pub y: usize,
@@ -25,10 +31,10 @@ struct Color {
 }
 
 const POINTS_COLOR: Color = Color {
-    r: 0,
-    g: 0,
+    r: 0x00,
+    g: 0x00,
     b: 0xff,
-    a: 0,
+    a: 0x00,
 };
 
 pub fn create<'a, T>(iter: T, path: &'a str, width: usize, height: usize) -> GraphResult
@@ -47,9 +53,9 @@ fn convert_display_points_to_array<'a>(points: Box<Iterator<Item = DisplayPoint>
                                        width: usize,
                                        height: usize)
                                        -> Vec<u8> {
-    let mut pixs = vec![0xFFu8; width * 4 * height * 4 ];
+    let mut pixs = vec![0xFFu8; width * height * 4 ];
     for p in points {
-        let i = p.y * width * 4 + p.x * 4;
+        let i = (p.y * width + p.x) * 4;
         pixs[i + 0] = POINTS_COLOR.b;
         pixs[i + 1] = POINTS_COLOR.g;
         pixs[i + 2] = POINTS_COLOR.r;
@@ -95,7 +101,7 @@ fn convert_to_display_points<'b, 'a: 'b, T>(iter: T,
 
     Box::new(iter.map(move |p| {
         let mut id_x = ((p.x - min_x) / resolution_x).floor() as usize;
-        let mut id_y = ((max_y - p.y) / resolution_y).floor() as usize;
+        let mut id_y = ((p.y - min_y) / resolution_y).floor() as usize;
         if id_x == width {
             id_x -= 1;
         }

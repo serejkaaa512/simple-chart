@@ -127,8 +127,8 @@ impl BitMapInfo {
             bitcount: 32u16,
             compression: 0u32,
             sizeimage: 0u32,
-            xpels_per_meter: 3780i32, //96 dpi
-            ypels_per_meter: 3780i32, //96 dpi
+            xpels_per_meter: 3780i32, // 96 dpi
+            ypels_per_meter: 3780i32, // 96 dpi
             clr_used: 0u32,
             clr_important: 0u32,
 
