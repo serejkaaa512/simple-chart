@@ -12,8 +12,8 @@ pub struct Point {
     pub y: f64,
 }
 
-impl From<(f64, f64)> for Point{
-    fn from(t: (f64, f64)) -> Self {
+impl<'a> From<&'a (f64, f64)> for Point {
+    fn from(t: &'a (f64, f64)) -> Point {
         Point { x: t.0, y: t.1 }
     }
 }
@@ -37,8 +37,9 @@ const POINTS_COLOR: Color = Color {
     a: 0x00,
 };
 
-pub fn create<'a, T>(iter: T, path: &'a str, width: usize, height: usize) -> GraphResult
-    where T: Iterator<Item = &'a Point> + Clone
+pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphResult
+    where T: Iterator<Item = P> + Clone,
+          P: Into<Point>
 {
     let graph = convert_to_display_points(iter, width, height);
     let mut bmp = BitMap::new();
@@ -71,17 +72,19 @@ fn save_file_on_disc<'a>(bmp: Vec<u8>, path: &Path) -> GraphResult {
 }
 
 
-fn convert_to_display_points<'b, 'a: 'b, T>(iter: T,
-                                            width: usize,
-                                            height: usize)
-                                            -> Box<Iterator<Item = DisplayPoint> + 'b>
-    where T: 'b + Iterator<Item = &'a Point> + Clone
+fn convert_to_display_points<'b, T, P>(iter: T,
+                                       width: usize,
+                                       height: usize)
+                                       -> Box<Iterator<Item = DisplayPoint> + 'b>
+    where T: 'b + Iterator<Item = P> + Clone,
+          P: Into<Point>
 {
 
     let (mut min_x, mut max_x) = (f64::INFINITY, f64::NEG_INFINITY);
     let (mut min_y, mut max_y) = (f64::INFINITY, f64::NEG_INFINITY);
 
     for p in iter.clone() {
+        let p = p.into();
         if p.x > max_x {
             max_x = p.x;
         }
@@ -100,6 +103,7 @@ fn convert_to_display_points<'b, 'a: 'b, T>(iter: T,
     let resolution_y: f64 = (max_y - min_y) / (height as f64);
 
     Box::new(iter.map(move |p| {
+        let p = p.into();
         let mut id_x = ((p.x - min_x) / resolution_x).floor() as usize;
         let mut id_y = ((p.y - min_y) / resolution_y).floor() as usize;
         if id_x == width {

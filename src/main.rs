@@ -4,12 +4,6 @@ use simple_graph::graph;
 
 
 fn main() {
-    let mut p = vec![];
-    for pp in 0..100 {
-        p.push(graph::Point {
-            x: pp as f64,
-            y: pp as f64,
-        });
-    }
-    let _ = graph::create(p.iter(), "graph.bmp", 740, 480);
+    let points: Vec<_> = formula!(y(x): f64 = {x*x}, x = [-100f64, 100f64; 1f64]).collect();
+    let _ = graph::create(points.iter(), "graph.bmp", 740, 480);
 }
