@@ -3,7 +3,10 @@ use std::f64;
 use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
+use std::iter::once;
 use BitMap;
+use FlatMapPairs;
+use Line;
 
 pub type GraphResult = Result<(), Box<Error>>;
 
@@ -18,6 +21,7 @@ impl<'a> From<&'a (f64, f64)> for Point {
     }
 }
 
+#[derive(PartialEq, Clone, Copy)]
 pub struct DisplayPoint {
     pub x: usize,
     pub y: usize,
@@ -41,13 +45,21 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
     where T: Iterator<Item = P> + Clone,
           P: Into<Point>
 {
-    let graph = convert_to_display_points(iter, width, height);
-    let mut bmp = BitMap::new();
-    let picture = convert_display_points_to_array(graph, width, height);
-    bmp = bmp.add_picture(picture, width, height);
+    let points = convert_to_display_points(iter, width, height);
+    let line = convert_points_to_line(points);
+    let picture = convert_display_points_to_array(line, width, height);
+    let bmp = BitMap::new().add_picture(picture, width, height);
     let byte_array = bmp.to_vec();
     try!(save_file_on_disc(byte_array, Path::new(&*path)));
     Ok(())
+}
+
+fn convert_points_to_line<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>)
+                              -> Box<Iterator<Item = DisplayPoint> + 'a> {
+    
+    let it1 = FlatMapPairs::new(points,
+                                |a: DisplayPoint, b: DisplayPoint| once(a).chain(Line::new(a, b)));
+    Box::new(it1)
 }
 
 fn convert_display_points_to_array<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>,
