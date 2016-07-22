@@ -6,6 +6,7 @@ pub mod graph;
 pub mod bitmap;
 mod line;
 mod flatmappairs;
+mod axis;
 
 pub use self::bitmap::BitMap;
 pub use self::line::Line;

@@ -10,6 +10,7 @@ use Line;
 
 pub type GraphResult = Result<(), Box<Error>>;
 
+#[derive(Clone, Copy)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
@@ -20,6 +21,8 @@ impl<'a> From<&'a (f64, f64)> for Point {
         Point { x: t.0, y: t.1 }
     }
 }
+
+
 
 #[derive(PartialEq, Clone, Copy)]
 pub struct DisplayPoint {
@@ -56,7 +59,7 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 
 fn convert_points_to_line<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>)
                               -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    
+
     let it1 = FlatMapPairs::new(points,
                                 |a: DisplayPoint, b: DisplayPoint| once(a).chain(Line::new(a, b)));
     Box::new(it1)
@@ -82,6 +85,8 @@ fn save_file_on_disc<'a>(bmp: Vec<u8>, path: &Path) -> GraphResult {
     try!(file.write_all(&bmp));
     Ok(())
 }
+
+
 
 
 fn convert_to_display_points<'b, T, P>(iter: T,
@@ -131,24 +136,15 @@ fn convert_to_display_points<'b, T, P>(iter: T,
 
 #[test]
 fn it_works() {
-    let p = vec![Point { x: 1f64, y: 1f64 },
-                 Point { x: 2f64, y: 2f64 },
-                 Point { x: 3f64, y: 3f64 }];
+    let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
     let _ = create(p.iter(), "/example/graph.bmp", 740, 480);
 }
 
 
 #[test]
 fn can_create_array() {
-    let p = vec![Point { x: 1f64, y: 1f64 },
-                 Point { x: 2f64, y: 2f64 },
-                 Point { x: 3f64, y: 3f64 }];
-
-    let width = 9;
-    let height = 9;
-
-    let display_points = convert_to_display_points(p.iter(), width, height);
-
+    let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
+    let display_points = convert_to_display_points(p.iter(), 9, 9);
     for p in display_points {
         println!("x: {}, y: {}", p.x, p.y);
     }
