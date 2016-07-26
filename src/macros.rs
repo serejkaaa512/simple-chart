@@ -31,6 +31,9 @@ macro_rules! formula {
 };
 }
 
+
+
+
 #[test]
 fn macros_test() {
     let points = formula!(y(x): i32 = {x*2}, x = [0, 2; 1]);

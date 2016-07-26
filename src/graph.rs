@@ -7,6 +7,7 @@ use std::iter::once;
 use BitMap;
 use FlatMapPairs;
 use Line;
+use axis;
 
 pub type GraphResult = Result<(), Box<Error>>;
 
@@ -48,10 +49,12 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
     where T: Iterator<Item = P> + Clone,
           P: Into<Point>
 {
-    let points = convert_to_display_points(iter, width, height);
+    let (min_x, max_x, min_y, max_y) = calculate_max_min(iter.clone());
+    let axis = axis::create_axis(max_x, min_x, max_y, min_y, width, height);
+    let points = convert_to_display_points(iter, width, height, min_x, max_x, min_y, max_y);
     let line = convert_points_to_line(points);
-    let picture = convert_display_points_to_array(line, width, height);
-    let bmp = BitMap::new().add_picture(picture, width, height);
+    let line_picture = convert_display_points_to_array(Box::new(line.chain(axis)), width, height);
+    let bmp = BitMap::new().add_picture(line_picture, width, height);
     let byte_array = bmp.to_vec();
     try!(save_file_on_disc(byte_array, Path::new(&*path)));
     Ok(())
@@ -91,31 +94,15 @@ fn save_file_on_disc<'a>(bmp: Vec<u8>, path: &Path) -> GraphResult {
 
 fn convert_to_display_points<'b, T, P>(iter: T,
                                        width: usize,
-                                       height: usize)
+                                       height: usize,
+                                       min_x: f64,
+                                       max_x: f64,
+                                       min_y: f64,
+                                       max_y: f64)
                                        -> Box<Iterator<Item = DisplayPoint> + 'b>
     where T: 'b + Iterator<Item = P> + Clone,
           P: Into<Point>
 {
-
-    let (mut min_x, mut max_x) = (f64::INFINITY, f64::NEG_INFINITY);
-    let (mut min_y, mut max_y) = (f64::INFINITY, f64::NEG_INFINITY);
-
-    for p in iter.clone() {
-        let p = p.into();
-        if p.x > max_x {
-            max_x = p.x;
-        }
-        if p.x < min_x {
-            min_x = p.x;
-        }
-        if p.y > max_y {
-            max_y = p.y;
-        }
-        if p.y < min_y {
-            min_y = p.y;
-        }
-    }
-
     let resolution_x: f64 = (max_x - min_x) / (width as f64);
     let resolution_y: f64 = (max_y - min_y) / (height as f64);
 
@@ -132,6 +119,31 @@ fn convert_to_display_points<'b, T, P>(iter: T,
         DisplayPoint { x: id_x, y: id_y }
     }))
 
+}
+
+fn calculate_max_min<'b, T, P>(iter: T) -> (f64, f64, f64, f64)
+    where T: 'b + Iterator<Item = P>,
+          P: Into<Point>
+{
+    let (mut min_x, mut max_x) = (f64::INFINITY, f64::NEG_INFINITY);
+    let (mut min_y, mut max_y) = (f64::INFINITY, f64::NEG_INFINITY);
+
+    for p in iter {
+        let p = p.into();
+        if p.x > max_x {
+            max_x = p.x;
+        }
+        if p.x < min_x {
+            min_x = p.x;
+        }
+        if p.y > max_y {
+            max_y = p.y;
+        }
+        if p.y < min_y {
+            min_y = p.y;
+        }
+    }
+    (min_x, max_x, min_y, max_y)
 }
 
 #[test]

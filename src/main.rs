@@ -5,5 +5,5 @@ use simple_graph::graph;
 
 fn main() {
     let points: Vec<_> = formula!(y(x): f64 = {x*x}, x = [-150f64, 150f64; 1f64]).collect();
-    let _ = graph::create(points.iter(), "graph.bmp", 740, 480);
+    let _ = graph::create(points.iter(), "graph.bmp", 100, 480);
 }
