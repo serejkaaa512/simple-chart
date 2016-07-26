@@ -44,11 +44,12 @@ fn calculate_x_axis_points<'a>(max: f64,
     let (c, c_i) = calculate_scale_intervals(max, min, kzc, k_i, w_available);
     let mut v: Vec<DisplayPoint> = vec![];
     let mut x_coord = 10;
+    let mut value = round(min, kzc as i32);
     for index in 0..k_i {
-        x_coord = x_coord + (index as usize) * c_i;
-        let value = round(min, kzc as i32) + (index as f64) * c;
         let value_s = &*value.to_string();
         v.extend(tick::create_tick_with_label(x_coord, value_s));
+        x_coord = x_coord + c_i;
+        value = value + c;
     }
     Box::new(v.into_iter())
 }
