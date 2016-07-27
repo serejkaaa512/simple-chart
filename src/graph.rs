@@ -45,43 +45,65 @@ const POINTS_COLOR: Color = Color {
     a: 0x00,
 };
 
+const AXIS_COLOR: Color = Color {
+    r: 0xff,
+    g: 0x00,
+    b: 0xff,
+    a: 0x00,
+};
+
 pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphResult
     where T: Iterator<Item = P> + Clone,
           P: Into<Point>
 {
-    let (min_x, max_x, min_y, max_y) = calculate_max_min(iter.clone());
-    let axis = axis::create_axis(max_x, min_x, max_y, min_y, width, height);
-    let points = convert_to_display_points(iter, width, height, min_x, max_x, min_y, max_y);
-    let line = convert_points_to_line(points);
-    let line_picture = convert_display_points_to_array(Box::new(line.chain(axis)), width, height);
-    let bmp = BitMap::new().add_picture(line_picture, width, height);
+    let (max_x, min_x, max_y, min_y) = calculate_max_min(iter.clone());
+
+    let function = convert_to_display_points(iter, width, height, min_x, max_x, min_y, max_y);
+
+    let line = extrapolate(function).collect();
+
+    let axis_x = axis::create_axis(max_x, min_x, width).collect();
+
+    let axis_y = axis::create_axis(max_y, min_y, height)
+        .map(|p| DisplayPoint { x: p.y, y: p.x })
+        .collect();
+
+    let mut pixs = vec![0xFFu8; width * height * 4 ];
+
+    draw_pixels(&mut pixs, width, line, POINTS_COLOR);
+
+    draw_pixels(&mut pixs, width, axis_x, AXIS_COLOR);
+
+    draw_pixels(&mut pixs, width, axis_y, AXIS_COLOR);
+
+    let bmp = BitMap::new().add_picture(pixs, width, height);
+
     let byte_array = bmp.to_vec();
+
     try!(save_file_on_disc(byte_array, Path::new(&*path)));
+
     Ok(())
 }
 
-fn convert_points_to_line<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>)
-                              -> Box<Iterator<Item = DisplayPoint> + 'a> {
+fn extrapolate<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>)
+                   -> Box<Iterator<Item = DisplayPoint> + 'a> {
 
     let it1 = FlatMapPairs::new(points,
                                 |a: DisplayPoint, b: DisplayPoint| once(a).chain(Line::new(a, b)));
     Box::new(it1)
 }
 
-fn convert_display_points_to_array<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>,
-                                       width: usize,
-                                       height: usize)
-                                       -> Vec<u8> {
-    let mut pixs = vec![0xFFu8; width * height * 4 ];
+
+fn draw_pixels(pixs: &mut Vec<u8>, width: usize, points: Vec<DisplayPoint>, color: Color) {
     for p in points {
         let i = (p.y * width + p.x) * 4;
-        pixs[i + 0] = POINTS_COLOR.b;
-        pixs[i + 1] = POINTS_COLOR.g;
-        pixs[i + 2] = POINTS_COLOR.r;
-        pixs[i + 3] = POINTS_COLOR.a;
+        pixs[i + 0] = color.b;
+        pixs[i + 1] = color.g;
+        pixs[i + 2] = color.r;
+        pixs[i + 3] = color.a;
     }
-    pixs
 }
+
 
 fn save_file_on_disc<'a>(bmp: Vec<u8>, path: &Path) -> GraphResult {
     let mut file = try!(File::create(&path));
@@ -100,7 +122,7 @@ fn convert_to_display_points<'b, T, P>(iter: T,
                                        min_y: f64,
                                        max_y: f64)
                                        -> Box<Iterator<Item = DisplayPoint> + 'b>
-    where T: 'b + Iterator<Item = P> + Clone,
+    where T: 'b + Iterator<Item = P>,
           P: Into<Point>
 {
     let resolution_x: f64 = (max_x - min_x) / (width as f64);
@@ -143,7 +165,7 @@ fn calculate_max_min<'b, T, P>(iter: T) -> (f64, f64, f64, f64)
             min_y = p.y;
         }
     }
-    (min_x, max_x, min_y, max_y)
+    (max_x, min_x, max_y, min_y)
 }
 
 #[test]

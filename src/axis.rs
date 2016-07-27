@@ -1,54 +1,65 @@
-#![allow(dead_code, unused_variables)]
-
 use std::f64;
 use DisplayPoint;
 use tick;
 
 const W_POINT: u8 = 1;      //value point separator width
-const W_BORDER: u8 = 1;     //space around graph width
-const SPACE_BETWEEN_NUMBERS: u8 = 1;     //space between numbers in pixels
-const W_ARROW: u8 = 4;      //width of arrow
+const W_BORDER: usize = 1;     //space around graph width
+const SPACE_BETWEEN_NUMBERS: usize = 1;     //space between numbers in pixels
+const W_ARROW: usize = 4;      //width of arrow
 const W_NUMBER: usize = 4;     //number width in pixel
-const H_NUMBER: u8 = 5;     //number height in pixels
+const H_NUMBER: usize = 5;     //number height in pixels
 const MAX_INTERVALS: u8 = 10;   // maximum intervals count
 
-struct Axis {
-    max: f64,
-    min: f64,
-    kzc: u8,
-    k_i: u8,
-    c: f64,
-    c_i: usize,
-}
 
-pub fn create_axis<'a>(x_max: f64,
-                       x_min: f64,
-                       y_max: f64,
-                       y_min: f64,
-                       width: usize,
-                       height: usize)
+pub fn create_axis<'a>(max: f64,
+                       min: f64,
+                       width: usize)
                        -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    let w_available = width - 2 * (W_BORDER as usize) - (H_NUMBER as usize) - (W_ARROW as usize);
-    let x_points = calculate_x_axis_points(x_max, x_min, w_available);
-    x_points
+
+    let ticks = calculate_axis_ticks(max, min, width);
+    let line = calculate_axis_line(width);
+    let arrow = calculate_axis_arrow(width);
+    Box::new(ticks.chain(line).chain(arrow))
 }
 
 
-fn calculate_x_axis_points<'a>(max: f64,
-                               min: f64,
-                               w_available: usize)
-                               -> Box<Iterator<Item = DisplayPoint> + 'a> {
+fn calculate_axis_line<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
+    let mut v = vec![];
+    for x in 10..size {
+        v.push(DisplayPoint { x: x, y: 10 });
+    }
+    Box::new(v.into_iter())
+}
 
+fn calculate_axis_arrow<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
+
+    Box::new(vec![(4, 13), (3, 12), (2, 11), (4, 7), (3, 8), (2, 9)]
+        .into_iter()
+        .map(move |(x, y)| {
+            DisplayPoint {
+                x: size - x,
+                y: y,
+            }
+        }))
+}
+
+fn calculate_axis_ticks<'a>(max: f64,
+                            min: f64,
+                            total_size: usize)
+                            -> Box<Iterator<Item = DisplayPoint> + 'a> {
+    let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_ARROW;
     let (s_max, kzc) = determine_max_numbers_count(max, min);
-    let k_i = calculate_intervals_count(w_available, s_max);
-    let (c, c_i) = calculate_scale_intervals(max, min, kzc, k_i, w_available);
-    let mut v: Vec<DisplayPoint> = vec![];
-    let mut x_coord = 10;
+    let k_i = calculate_intervals_count(available_size, s_max);
+    let (c, c_i) = calculate_scale_intervals(max, min, kzc, k_i, available_size);
+
+    let mut shift = W_BORDER + H_NUMBER + W_NUMBER;
     let mut value = round(min, kzc as i32);
-    for index in 0..k_i {
+
+    let mut v: Vec<DisplayPoint> = vec![];
+    for _ in 0..k_i {
         let value_s = &*value.to_string();
-        v.extend(tick::create_tick_with_label(x_coord, value_s));
-        x_coord = x_coord + c_i;
+        v.extend(tick::create_tick_with_label(shift, value_s));
+        shift = shift + c_i;
         value = value + c;
     }
     Box::new(v.into_iter())
@@ -58,11 +69,11 @@ fn calculate_scale_intervals(max: f64,
                              min: f64,
                              kzc: u8,
                              k_i: u8,
-                             w_available: usize)
+                             available_size: usize)
                              -> (f64, usize) {
     let c = (max - min) / (k_i as f64);
     let c_round = round(c, kzc as i32);
-    let c_i = ((w_available as f64) * c / (max - min)) as usize;
+    let c_i = ((available_size as f64) * c / (max - min)) as usize;
     (c_round, c_i)
 }
 
@@ -98,10 +109,8 @@ fn get_numbers_count(value: i64) -> u8 {
     value.to_string().len() as u8
 }
 
-fn calculate_intervals_count(w_available: usize, s_max: u8) -> u8 {
-    let k = (w_available /
-             (((W_NUMBER as usize) + (SPACE_BETWEEN_NUMBERS as usize)) * (s_max as usize))) -
-            1;
+fn calculate_intervals_count(available_size: usize, s_max: u8) -> u8 {
+    let k = (available_size / ((W_NUMBER + SPACE_BETWEEN_NUMBERS) * (s_max as usize))) - 1;
     if k > MAX_INTERVALS as usize {
         MAX_INTERVALS
     } else {
