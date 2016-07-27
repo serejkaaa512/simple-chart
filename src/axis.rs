@@ -13,10 +13,11 @@ const MAX_INTERVALS: u8 = 10;   // maximum intervals count
 
 pub fn create_axis<'a>(max: f64,
                        min: f64,
-                       width: usize)
+                       width: usize,
+                       inverse: bool)
                        -> Box<Iterator<Item = DisplayPoint> + 'a> {
 
-    let ticks = calculate_axis_ticks(max, min, width);
+    let ticks = calculate_axis_ticks(max, min, width, inverse);
     let line = calculate_axis_line(width);
     let arrow = calculate_axis_arrow(width);
     Box::new(ticks.chain(line).chain(arrow))
@@ -45,7 +46,8 @@ fn calculate_axis_arrow<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + 
 
 fn calculate_axis_ticks<'a>(max: f64,
                             min: f64,
-                            total_size: usize)
+                            total_size: usize,
+                            inverse: bool)
                             -> Box<Iterator<Item = DisplayPoint> + 'a> {
     let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_ARROW;
     let (s_max, kzc) = determine_max_numbers_count(max, min);
@@ -58,7 +60,7 @@ fn calculate_axis_ticks<'a>(max: f64,
     let mut v: Vec<DisplayPoint> = vec![];
     for _ in 0..k_i {
         let value_s = &*value.to_string();
-        v.extend(tick::create_tick_with_label(shift, value_s));
+        v.extend(tick::create_tick_with_label(shift, value_s, inverse));
         shift = shift + c_i;
         value = value + c;
     }

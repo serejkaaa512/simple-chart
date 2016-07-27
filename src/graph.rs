@@ -62,9 +62,9 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 
     let line = extrapolate(function).collect();
 
-    let axis_x = axis::create_axis(max_x, min_x, width).collect();
+    let axis_x = axis::create_axis(max_x, min_x, width, false).collect();
 
-    let axis_y = axis::create_axis(max_y, min_y, height)
+    let axis_y = axis::create_axis(max_y, min_y, height, true)
         .map(|p| DisplayPoint { x: p.y, y: p.x })
         .collect();
 

@@ -1,30 +1,51 @@
 use DisplayPoint;
 
 const W_NUMBER: usize = 4;     //number width in pixels
+const H_NUMBER: usize = 5;     //number height in pixels
+const SPACE_BETWEEN_NUMBERS: usize = 1;     //space between numbers in pixels
+const BORDER: usize = 1;     //space around graph width
 
 
 pub fn create_tick_with_label<'a>(shift: usize,
-                                  value: &'a str)
+                                  value: &'a str,
+                                  inverse: bool)
                                   -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(create_mark(shift).chain(create_label(shift - W_NUMBER, value)))
+
+    Box::new(create_mark(shift).chain(create_label(shift - W_NUMBER, value, inverse)))
 }
 
 pub fn create_mark<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
     Box::new((0..2).map(move |i| {
         DisplayPoint {
             x: shift,
-            y: 7 + i,
+            y: 2 * BORDER + H_NUMBER + i,
         }
     }))
 }
 
-pub fn create_label<'a>(shift: usize, value: &'a str) -> Box<Iterator<Item = DisplayPoint> + 'a> {
+pub fn create_label<'a>(shift: usize,
+                        value: &'a str,
+                        inverse: bool)
+                        -> Box<Iterator<Item = DisplayPoint> + 'a> {
     let mut char_position = shift;
-    Box::new(value.chars().flat_map(move |char| {
-        let it = get_char_picture(char, char_position);
-        char_position += W_NUMBER + 1;
-        it
-    }))
+    if inverse {
+        Box::new(value.chars().flat_map(move |char| {
+            let it = get_char_picture(char, char_position).map(|p| {
+                DisplayPoint {
+                    x: p.x,
+                    y: H_NUMBER + BORDER - p.y,
+                }
+            });
+            char_position += W_NUMBER + SPACE_BETWEEN_NUMBERS;
+            it
+        }))
+    } else {
+        Box::new(value.chars().flat_map(move |char| {
+            let it = get_char_picture(char, char_position);
+            char_position += W_NUMBER + SPACE_BETWEEN_NUMBERS;
+            it
+        }))
+    }
 }
 
 
