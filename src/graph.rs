@@ -3,10 +3,8 @@ use std::f64;
 use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
-use std::iter::once;
 use BitMap;
-use FlatMapPairs;
-use Line;
+use line;
 use axis;
 
 pub type GraphResult = Result<(), Box<Error>>;
@@ -46,9 +44,9 @@ const POINTS_COLOR: Color = Color {
 };
 
 const AXIS_COLOR: Color = Color {
-    r: 0xff,
+    r: 0x00,
     g: 0x00,
-    b: 0xff,
+    b: 0x00,
     a: 0x00,
 };
 
@@ -60,7 +58,7 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 
     let function = convert_to_display_points(iter, width, height, min_x, max_x, min_y, max_y);
 
-    let line = extrapolate(function).collect();
+    let line = line::extrapolate(function).collect();
 
     let axis_x = axis::create_axis(max_x, min_x, width, false).collect();
 
@@ -76,21 +74,13 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 
     draw_pixels(&mut pixs, width, axis_y, AXIS_COLOR);
 
-    let bmp = BitMap::new().add_picture(pixs, width, height);
+    let bmp = BitMap::new().add_pixels(pixs, width, height);
 
     let byte_array = bmp.to_vec();
 
     try!(save_file_on_disc(byte_array, Path::new(&*path)));
 
     Ok(())
-}
-
-fn extrapolate<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>)
-                   -> Box<Iterator<Item = DisplayPoint> + 'a> {
-
-    let it1 = FlatMapPairs::new(points,
-                                |a: DisplayPoint, b: DisplayPoint| once(a).chain(Line::new(a, b)));
-    Box::new(it1)
 }
 
 

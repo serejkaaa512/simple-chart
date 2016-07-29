@@ -15,19 +15,19 @@ impl BitMap {
         }
     }
 
-    pub fn add_picture(self, pic: Vec<u8>, width: usize, height: usize) -> Self {
+    pub fn add_pixels(self, pic: Vec<u8>, width: usize, height: usize) -> Self {
         let header_len = BitMapHeader::len();
         let info_len = BitMapInfo::len();
         let file_lenght = (pic.len() as u32) + header_len + info_len;
         let pixels_data_offset = header_len + info_len;
 
         let header = self.header
-                         .set_lenght(file_lenght as u32)
-                         .set_data_offset(pixels_data_offset as u32);
+            .set_lenght(file_lenght as u32)
+            .set_data_offset(pixels_data_offset as u32);
 
         let info = self.info
-                       .set_width(width as i32)
-                       .set_height(height as i32);
+            .set_width(width as i32)
+            .set_height(height as i32);
 
         BitMap {
             header: header,

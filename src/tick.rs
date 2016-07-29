@@ -15,10 +15,10 @@ pub fn create_tick_with_label<'a>(shift: usize,
 }
 
 pub fn create_mark<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new((0..2).map(move |i| {
+    Box::new((0..400).map(move |i| {
         DisplayPoint {
             x: shift,
-            y: 2 * BORDER + H_NUMBER + i,
+            y: BORDER + H_NUMBER + BORDER + i,
         }
     }))
 }

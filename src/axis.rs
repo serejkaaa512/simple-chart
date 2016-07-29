@@ -13,21 +13,26 @@ const MAX_INTERVALS: u8 = 10;   // maximum intervals count
 
 pub fn create_axis<'a>(max: f64,
                        min: f64,
-                       width: usize,
+                       size: usize,
                        inverse: bool)
                        -> Box<Iterator<Item = DisplayPoint> + 'a> {
 
-    let ticks = calculate_axis_ticks(max, min, width, inverse);
-    let line = calculate_axis_line(width);
-    let arrow = calculate_axis_arrow(width);
+    let (c, c_i, start_shift, start_value, k_i) = calculate_axis_ticks_params(max, min, size);
+    let ticks = create_ticks_points(c, c_i, start_shift, start_value, k_i, inverse);
+    let line = calculate_axis_line(size);
+    let arrow = calculate_axis_arrow(size);
     Box::new(ticks.chain(line).chain(arrow))
 }
 
 
 fn calculate_axis_line<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
     let mut v = vec![];
-    for x in 10..size {
-        v.push(DisplayPoint { x: x, y: 10 });
+    let start_shift = W_BORDER + H_NUMBER + W_NUMBER;
+    for x in start_shift..size {
+        v.push(DisplayPoint {
+            x: x,
+            y: start_shift,
+        });
     }
     Box::new(v.into_iter())
 }
@@ -44,35 +49,43 @@ fn calculate_axis_arrow<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + 
         }))
 }
 
-fn calculate_axis_ticks<'a>(max: f64,
-                            min: f64,
-                            total_size: usize,
-                            inverse: bool)
-                            -> Box<Iterator<Item = DisplayPoint> + 'a> {
+fn calculate_axis_ticks_params<'a>(max: f64,
+                                   min: f64,
+                                   total_size: usize)
+                                   -> (f64, usize, usize, f64, u8) {
     let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_ARROW;
     let (s_max, kzc) = determine_max_numbers_count(max, min);
     let k_i = calculate_intervals_count(available_size, s_max);
-    let (c, c_i) = calculate_scale_intervals(max, min, kzc, k_i, available_size);
+    let (c, c_i) = calculate_scale_interval(max, min, kzc, k_i, available_size);
+    let start_shift = W_BORDER + H_NUMBER + W_NUMBER;
+    let start_value = round(min, kzc as i32);
+    (c, c_i, start_shift, start_value, k_i)
+}
 
-    let mut shift = W_BORDER + H_NUMBER + W_NUMBER;
-    let mut value = round(min, kzc as i32);
 
+fn create_ticks_points<'a>(c: f64,
+                           c_i: usize,
+                           start_shift: usize,
+                           start_value: f64,
+                           k_i: u8,
+                           inverse: bool)
+                           -> Box<Iterator<Item = DisplayPoint> + 'a> {
     let mut v: Vec<DisplayPoint> = vec![];
-    for _ in 0..k_i {
-        let value_s = &*value.to_string();
-        v.extend(tick::create_tick_with_label(shift, value_s, inverse));
-        shift = shift + c_i;
-        value = value + c;
+    for i in 0..k_i {
+        let value_s = &*(start_value + c * (i as f64)).to_string();
+        v.extend(tick::create_tick_with_label(start_shift + c_i * (i as usize), value_s, inverse));
     }
+
     Box::new(v.into_iter())
 }
 
-fn calculate_scale_intervals(max: f64,
-                             min: f64,
-                             kzc: u8,
-                             k_i: u8,
-                             available_size: usize)
-                             -> (f64, usize) {
+
+fn calculate_scale_interval(max: f64,
+                            min: f64,
+                            kzc: u8,
+                            k_i: u8,
+                            available_size: usize)
+                            -> (f64, usize) {
     let c = (max - min) / (k_i as f64);
     let c_round = round(c, kzc as i32);
     let c_i = ((available_size as f64) * c / (max - min)) as usize;
@@ -165,7 +178,7 @@ fn calculate_intervals_count_test_more_10() {
 
 #[test]
 fn calculate_scale_interval_test() {
-    let (c, c_i) = calculate_scale_intervals(100.0, 0.0, 0, 2, 89);
+    let (c, c_i) = calculate_scale_interval(100.0, 0.0, 0, 2, 89);
     assert_eq!(c, 50.0);
     assert_eq!(c_i, 44);
 }

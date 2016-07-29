@@ -1,4 +1,6 @@
 use DisplayPoint;
+use flatmappairs::FlatMapPairs;
+use std::iter::once;
 
 pub struct Line {
     first: DisplayPoint,
@@ -48,7 +50,7 @@ impl Iterator for Line {
     type Item = DisplayPoint;
 
     fn next(&mut self) -> Option<Self::Item> {
-        
+
         if self.first == self.last {
             return None;
         }
@@ -96,4 +98,12 @@ impl Iterator for Line {
             Some(self.cur)
         }
     }
+}
+
+pub fn extrapolate<'a>(points: Box<Iterator<Item = DisplayPoint> + 'a>)
+                       -> Box<Iterator<Item = DisplayPoint> + 'a> {
+
+    let it = FlatMapPairs::new(points,
+                               |a: DisplayPoint, b: DisplayPoint| once(a).chain(Line::new(a, b)));
+    Box::new(it)
 }
