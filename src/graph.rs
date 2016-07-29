@@ -7,6 +7,11 @@ use BitMap;
 use line;
 use axis;
 
+const W_ARROW: usize = 4;      //width of arrow
+const W_NUMBER: usize = 4;     //number width in pixel
+const H_NUMBER: usize = 5;     //number height in pixels
+const W_BORDER: usize = 1;     //space around graph width
+
 pub type GraphResult = Result<(), Box<Error>>;
 
 #[derive(Clone, Copy)]
@@ -56,23 +61,31 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 {
     let (max_x, min_x, max_y, min_y) = calculate_max_min(iter.clone());
 
-    let function = convert_to_display_points(iter, width, height, min_x, max_x, min_y, max_y);
+    let axis_x = axis::create_axis(max_x, min_x, width, false, height).collect();
 
-    let line = line::extrapolate(function).collect();
-
-    let axis_x = axis::create_axis(max_x, min_x, width, false).collect();
-
-    let axis_y = axis::create_axis(max_y, min_y, height, true)
+    let axis_y = axis::create_axis(max_y, min_y, height, true, width)
         .map(|p| DisplayPoint { x: p.y, y: p.x })
         .collect();
 
-    let mut pixs = vec![0xFFu8; width * height * 4 ];
+    let func_shift = W_BORDER + W_NUMBER + H_NUMBER;
+    let function = convert_to_display_points(iter,
+                                             width - (func_shift + W_ARROW),
+                                             height - (func_shift + W_ARROW),
+                                             func_shift,
+                                             min_x,
+                                             max_x,
+                                             min_y,
+                                             max_y);
 
-    draw_pixels(&mut pixs, width, line, POINTS_COLOR);
+    let line = line::extrapolate(function).collect();
+
+    let mut pixs = vec![0xFFu8; width * height * 4 ];
 
     draw_pixels(&mut pixs, width, axis_x, AXIS_COLOR);
 
     draw_pixels(&mut pixs, width, axis_y, AXIS_COLOR);
+
+    draw_pixels(&mut pixs, width, line, POINTS_COLOR);
 
     let bmp = BitMap::new().add_pixels(pixs, width, height);
 
@@ -107,6 +120,7 @@ fn save_file_on_disc<'a>(bmp: Vec<u8>, path: &Path) -> GraphResult {
 fn convert_to_display_points<'b, T, P>(iter: T,
                                        width: usize,
                                        height: usize,
+                                       func_shift: usize,
                                        min_x: f64,
                                        max_x: f64,
                                        min_y: f64,
@@ -128,7 +142,10 @@ fn convert_to_display_points<'b, T, P>(iter: T,
         if id_y == height {
             id_y -= 1;
         }
-        DisplayPoint { x: id_x, y: id_y }
+        DisplayPoint {
+            x: (id_x + func_shift),
+            y: (id_y + func_shift),
+        }
     }))
 
 }

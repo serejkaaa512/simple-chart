@@ -4,23 +4,37 @@ const W_NUMBER: usize = 4;     //number width in pixels
 const H_NUMBER: usize = 5;     //number height in pixels
 const SPACE_BETWEEN_NUMBERS: usize = 1;     //space between numbers in pixels
 const BORDER: usize = 1;     //space around graph width
+const H_ARROW_HALF: usize = 3;      //half arrow height
 
 
 pub fn create_tick_with_label<'a>(shift: usize,
                                   value: &'a str,
-                                  inverse: bool)
+                                  inverse: bool,
+                                  opposite_size: usize)
                                   -> Box<Iterator<Item = DisplayPoint> + 'a> {
 
-    Box::new(create_mark(shift).chain(create_label(shift - W_NUMBER, value, inverse)))
+    Box::new(create_mark(shift, opposite_size)
+        .chain(create_label(shift - W_NUMBER, value, inverse)))
 }
 
-pub fn create_mark<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new((0..400).map(move |i| {
-        DisplayPoint {
-            x: shift,
-            y: BORDER + H_NUMBER + BORDER + i,
+pub fn create_mark<'a>(shift: usize,
+                       opposite_size: usize)
+                       -> Box<Iterator<Item = DisplayPoint> + 'a> {
+    let mut v = vec![];
+    let opposite_shift = BORDER + H_NUMBER + BORDER;
+
+    for i in opposite_shift..(opposite_shift + H_ARROW_HALF) {
+        v.push(DisplayPoint { x: shift, y: i })
+    }
+
+    for j in (opposite_shift + H_ARROW_HALF)..(opposite_size - opposite_shift - BORDER) {
+        if j % 2 == 0 {
+            continue;
         }
-    }))
+        v.push(DisplayPoint { x: shift, y: j })
+    }
+
+    Box::new(v.into_iter())
 }
 
 pub fn create_label<'a>(shift: usize,
