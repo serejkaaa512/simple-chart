@@ -185,7 +185,7 @@ fn it_works() {
 #[test]
 fn can_create_array() {
     let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
-    let display_points = convert_to_display_points(p.iter(), 9, 9);
+    let display_points = convert_to_display_points(p.iter(), 9, 9, 0, 0.0, 10.0, 0.0, 100.0);
     for p in display_points {
         println!("x: {}, y: {}", p.x, p.y);
     }

@@ -196,3 +196,16 @@ fn calculate_scale_interval_test() {
     assert_eq!(c, 50.0);
     assert_eq!(c_i, 44);
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+
+    #[bench]
+    fn name(b: &mut Bencher) {
+        b.iter(|| create_axis(100.0, 0.0, 1000, false, 1000))
+    }
+}
