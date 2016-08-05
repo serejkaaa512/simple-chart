@@ -6,6 +6,12 @@ pub struct BitMap {
     array: Vec<u8>,
 }
 
+impl Default for BitMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BitMap {
     pub fn new() -> Self {
         BitMap {

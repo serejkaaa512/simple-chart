@@ -57,10 +57,10 @@ fn calculate_axis_arrow<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + 
         }))
 }
 
-fn calculate_axis_ticks_params<'a>(max: f64,
-                                   min: f64,
-                                   total_size: usize)
-                                   -> (f64, usize, usize, f64, u8, u8) {
+fn calculate_axis_ticks_params(max: f64,
+                               min: f64,
+                               total_size: usize)
+                               -> (f64, usize, usize, f64, u8, u8) {
     let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_ARROW;
     let (s_max, kzc) = determine_max_numbers_count(max, min);
     let k_i = calculate_intervals_count(available_size, s_max);
@@ -127,7 +127,7 @@ fn determine_max_numbers_count(max: f64, min: f64) -> (u8, u8) {
     } else {
         let mut kzc = 0;
         while d < 10.0 {
-            d = d * 10.0;
+            d *= 10.0;
             kzc += 1;
         }
         (maxc + W_POINT + kzc, kzc)

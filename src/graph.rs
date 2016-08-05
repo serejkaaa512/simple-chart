@@ -100,7 +100,7 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 fn draw_pixels(pixs: &mut Vec<u8>, width: usize, points: Vec<DisplayPoint>, color: Color) {
     for p in points {
         let i = (p.y * width + p.x) * 4;
-        pixs[i + 0] = color.b;
+        pixs[i] = color.b;
         pixs[i + 1] = color.g;
         pixs[i + 2] = color.r;
         pixs[i + 3] = color.a;
@@ -108,7 +108,7 @@ fn draw_pixels(pixs: &mut Vec<u8>, width: usize, points: Vec<DisplayPoint>, colo
 }
 
 
-fn save_file_on_disc<'a>(bmp: Vec<u8>, path: &Path) -> GraphResult {
+fn save_file_on_disc(bmp: Vec<u8>, path: &Path) -> GraphResult {
     let mut file = try!(File::create(&path));
     try!(file.write_all(&bmp));
     Ok(())

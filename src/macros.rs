@@ -18,7 +18,7 @@ macro_rules! formula {
             fn next(&mut self) -> Option<($sty,$sty)> {
                 if self.current_x <= self.max_x {
                     let x = self.current_x;
-                    self.current_x = self.current_x + self.step_x;
+                    self.current_x += self.step_x;
                     Some((x, (self.f)(x)))
                 } else {
                     None
