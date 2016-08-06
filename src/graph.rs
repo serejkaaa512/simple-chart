@@ -61,9 +61,10 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 {
     let (max_x, min_x, max_y, min_y) = calculate_max_min(iter.clone());
 
-    let axis_x = axis::create_axis(max_x, min_x, width, false, height).collect();
+    let axis_x = axis::create_axis(max_x, min_x, width, false, height);
 
-    let axis_y = axis::create_axis(max_y, min_y, height, true, width)
+    let axis_y: Vec<DisplayPoint> = axis::create_axis(max_y, min_y, height, true, width)
+        .into_iter()
         .map(|p| DisplayPoint { x: p.y, y: p.x })
         .collect();
 
@@ -77,9 +78,11 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
                                              min_y,
                                              max_y);
 
-    let line = line::extrapolate(function).collect();
+    let line: Vec<DisplayPoint> = line::extrapolate(function).collect();
 
-    let mut pixs = vec![0xFFu8; width * height * 4 ];
+    let size = width * height * 4;
+
+    let mut pixs = vec![0xFFu8;  size];
 
     draw_pixels(&mut pixs, width, axis_x, AXIS_COLOR);
 
@@ -188,5 +191,19 @@ fn can_create_array() {
     let display_points = convert_to_display_points(p.iter(), 9, 9, 0, 0.0, 10.0, 0.0, 100.0);
     for p in display_points {
         println!("x: {}, y: {}", p.x, p.y);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+
+    #[bench]
+    fn create_graph_bench(b: &mut Bencher) {
+        b.iter(|| {
+            let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
+            let _ = create(p.iter(), "graph.bmp", 740, 480);
+        })
     }
 }

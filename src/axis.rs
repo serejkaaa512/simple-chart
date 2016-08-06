@@ -11,14 +11,15 @@ const H_NUMBER: usize = 5;     //number height in pixels
 const MAX_INTERVALS: u8 = 10;   // maximum intervals count
 
 
-pub fn create_axis<'a>(max: f64,
-                       min: f64,
-                       size: usize,
-                       inverse: bool,
-                       opposite_size: usize)
-                       -> Box<Iterator<Item = DisplayPoint> + 'a> {
+pub fn create_axis(max: f64,
+                   min: f64,
+                   size: usize,
+                   inverse: bool,
+                   opposite_size: usize)
+                   -> Vec<DisplayPoint> {
 
     let (c, c_i, start_shift, start_value, k_i, kzc) = calculate_axis_ticks_params(max, min, size);
+    let mut v: Vec<DisplayPoint> = vec![];
     let ticks = create_ticks_points(c,
                                     c_i,
                                     start_shift,
@@ -29,11 +30,14 @@ pub fn create_axis<'a>(max: f64,
                                     kzc);
     let line = calculate_axis_line(size);
     let arrow = calculate_axis_arrow(size);
-    Box::new(ticks.chain(line).chain(arrow))
+    v.extend(ticks);
+    v.extend(line);
+    v.extend(arrow);
+    v
 }
 
 
-fn calculate_axis_line<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
+fn calculate_axis_line(size: usize) -> Vec<DisplayPoint> {
     let mut v = vec![];
     let start_shift = W_BORDER + H_NUMBER + W_NUMBER;
     for x in start_shift..size {
@@ -42,19 +46,20 @@ fn calculate_axis_line<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + '
             y: start_shift,
         });
     }
-    Box::new(v.into_iter())
+    v
 }
 
-fn calculate_axis_arrow<'a>(size: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
+fn calculate_axis_arrow(size: usize) -> Vec<DisplayPoint> {
 
-    Box::new(vec![(4, 13), (3, 12), (2, 11), (4, 7), (3, 8), (2, 9)]
+    vec![(4, 13), (3, 12), (2, 11), (4, 7), (3, 8), (2, 9)]
         .into_iter()
         .map(move |(x, y)| {
             DisplayPoint {
                 x: size - x,
                 y: y,
             }
-        }))
+        })
+        .collect()
 }
 
 fn calculate_axis_ticks_params(max: f64,
@@ -71,15 +76,15 @@ fn calculate_axis_ticks_params(max: f64,
 }
 
 
-fn create_ticks_points<'a>(c: f64,
-                           c_i: usize,
-                           start_shift: usize,
-                           start_value: f64,
-                           k_i: u8,
-                           inverse: bool,
-                           opposite_size: usize,
-                           kzc: u8)
-                           -> Box<Iterator<Item = DisplayPoint> + 'a> {
+fn create_ticks_points(c: f64,
+                       c_i: usize,
+                       start_shift: usize,
+                       start_value: f64,
+                       k_i: u8,
+                       inverse: bool,
+                       opposite_size: usize,
+                       kzc: u8)
+                       -> Vec<DisplayPoint> {
     let mut v: Vec<DisplayPoint> = vec![];
     for i in 0..k_i {
         let value = round((start_value + c * (i as f64)), kzc as i32);
@@ -89,8 +94,7 @@ fn create_ticks_points<'a>(c: f64,
                                               inverse,
                                               opposite_size));
     }
-
-    Box::new(v.into_iter())
+    v
 }
 
 
@@ -205,7 +209,7 @@ mod tests {
     use test::Bencher;
 
     #[bench]
-    fn name(b: &mut Bencher) {
+    fn create_axis_bench(b: &mut Bencher) {
         b.iter(|| create_axis(100.0, 0.0, 1000, false, 1000))
     }
 }

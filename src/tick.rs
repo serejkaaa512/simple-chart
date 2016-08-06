@@ -7,19 +7,19 @@ const BORDER: usize = 1;     //space around graph width
 const H_ARROW_HALF: usize = 3;      //half arrow height
 
 
-pub fn create_tick_with_label<'a>(shift: usize,
-                                  value: &'a str,
-                                  inverse: bool,
-                                  opposite_size: usize)
-                                  -> Box<Iterator<Item = DisplayPoint> + 'a> {
-
-    Box::new(create_mark(shift, opposite_size)
-        .chain(create_label(shift - W_NUMBER, value, inverse)))
+pub fn create_tick_with_label(shift: usize,
+                              value: &str,
+                              inverse: bool,
+                              opposite_size: usize)
+                              -> Vec<DisplayPoint> {
+    let mut v: Vec<DisplayPoint> = vec![];
+    v.extend(create_mark(shift, opposite_size));
+    v.extend(create_label(shift - W_NUMBER, value, inverse));
+    v
 }
 
-pub fn create_mark<'a>(shift: usize,
-                       opposite_size: usize)
-                       -> Box<Iterator<Item = DisplayPoint> + 'a> {
+
+pub fn create_mark(shift: usize, opposite_size: usize) -> Vec<DisplayPoint> {
     let mut v = vec![];
     let opposite_shift = BORDER + H_NUMBER + BORDER;
 
@@ -33,189 +33,114 @@ pub fn create_mark<'a>(shift: usize,
         }
         v.push(DisplayPoint { x: shift, y: j })
     }
-
-    Box::new(v.into_iter())
+    v
 }
 
-pub fn create_label<'a>(shift: usize,
-                        value: &'a str,
-                        inverse: bool)
-                        -> Box<Iterator<Item = DisplayPoint> + 'a> {
+
+
+pub fn create_label(shift: usize, value: &str, inverse: bool) -> Vec<DisplayPoint> {
     let mut char_position = shift;
+    let mut v = vec![];
     if inverse {
-        Box::new(value.chars().flat_map(move |char| {
-            let it = get_char_picture(char, char_position).map(|p| {
+        for char_ in value.chars() {
+            let char_v = get_char_picture(char_).into_iter().map(move |p| {
                 DisplayPoint {
-                    x: p.x,
-                    y: H_NUMBER + BORDER - p.y,
+                    x: char_position + p.0,
+                    y: H_NUMBER + BORDER - p.1,
                 }
             });
             char_position += W_NUMBER + SPACE_BETWEEN_NUMBERS;
-            it
-        }))
+            v.extend(char_v);
+        }
     } else {
-        Box::new(value.chars().flat_map(move |char| {
-            let it = get_char_picture(char, char_position);
+        for char_ in value.chars() {
+            let char_v = get_char_picture(char_).into_iter().map(move |p| {
+                DisplayPoint {
+                    x: char_position + p.0,
+                    y: p.1,
+                }
+            });
             char_position += W_NUMBER + SPACE_BETWEEN_NUMBERS;
-            it
-        }))
+            v.extend(char_v);
+        }
     }
+    v
 }
 
 
 
-
-fn get_char_picture<'a>(char: char, shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
+fn get_char_picture(char: char) -> Vec<(usize, usize)> {
     match char {
-        '1' => get_picture_of_1(shift),
-        '2' => get_picture_of_2(shift),
-        '3' => get_picture_of_3(shift),
-        '4' => get_picture_of_4(shift),
-        '5' => get_picture_of_5(shift),
-        '6' => get_picture_of_6(shift),
-        '7' => get_picture_of_7(shift),
-        '8' => get_picture_of_8(shift),
-        '9' => get_picture_of_9(shift),
-        '0' => get_picture_of_0(shift),
-        '.' => get_picture_of_point(shift),
-        '-' => get_picture_of_minus(shift),
-        _ => Box::new(vec![].into_iter()),
+        '1' => get_picture_of_1(),
+        '2' => get_picture_of_2(),
+        '3' => get_picture_of_3(),
+        '4' => get_picture_of_4(),
+        '5' => get_picture_of_5(),
+        '6' => get_picture_of_6(),
+        '7' => get_picture_of_7(),
+        '8' => get_picture_of_8(),
+        '9' => get_picture_of_9(),
+        '0' => get_picture_of_0(),
+        '.' => get_picture_of_point(),
+        '-' => get_picture_of_minus(),
+        _ => vec![],
     }
 }
 
 
-
-fn get_picture_of_1<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(2, 5), (1, 4), (2, 4), (0, 3), (2, 3), (2, 2), (0, 1), (1, 1), (2, 1), (3, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_1() -> Vec<(usize, usize)> {
+    vec![(2, 5), (1, 4), (2, 4), (0, 3), (2, 3), (2, 2), (0, 1), (1, 1), (2, 1), (3, 1)]
 }
 
-fn get_picture_of_2<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(1, 5), (2, 5), (0, 4), (3, 4), (2, 3), (1, 2), (0, 1), (1, 1), (2, 1), (3, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_2() -> Vec<(usize, usize)> {
+    vec![(1, 5), (2, 5), (0, 4), (3, 4), (2, 3), (1, 2), (0, 1), (1, 1), (2, 1), (3, 1)]
 }
 
-fn get_picture_of_3<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(1, 5), (2, 5), (0, 4), (3, 4), (2, 3), (3, 2), (0, 2), (1, 1), (2, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_3() -> Vec<(usize, usize)> {
+    vec![(1, 5), (2, 5), (0, 4), (3, 4), (2, 3), (3, 2), (0, 2), (1, 1), (2, 1)]
+
 }
 
-fn get_picture_of_4<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(0, 5), (3, 5), (0, 4), (3, 4), (1, 3), (2, 3), (3, 3), (3, 2), (3, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_4() -> Vec<(usize, usize)> {
+    vec![(0, 5), (3, 5), (0, 4), (3, 4), (1, 3), (2, 3), (3, 3), (3, 2), (3, 1)]
 }
 
-fn get_picture_of_5<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(3, 5), (2, 5), (1, 5), (0, 5), (0, 4), (2, 3), (1, 3), (0, 3), (3, 2), (2, 1),
-                  (1, 1), (0, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_5() -> Vec<(usize, usize)> {
+    vec![(3, 5), (2, 5), (1, 5), (0, 5), (0, 4), (2, 3), (1, 3), (0, 3), (3, 2), (2, 1), (1, 1),
+         (0, 1)]
 }
 
-fn get_picture_of_6<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(3, 5), (2, 5), (1, 5), (0, 4), (2, 3), (1, 3), (0, 3), (3, 2), (0, 2), (2, 1),
-                  (1, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_6() -> Vec<(usize, usize)> {
+    vec![(3, 5), (2, 5), (1, 5), (0, 4), (2, 3), (1, 3), (0, 3), (3, 2), (0, 2), (2, 1), (1, 1)]
+
 }
 
-fn get_picture_of_7<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(3, 5), (2, 5), (1, 5), (0, 5), (3, 4), (2, 3), (1, 2), (0, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_7() -> Vec<(usize, usize)> {
+    vec![(3, 5), (2, 5), (1, 5), (0, 5), (3, 4), (2, 3), (1, 2), (0, 1)]
+
 }
 
-fn get_picture_of_8<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(2, 5), (1, 5), (3, 4), (0, 4), (2, 3), (1, 3), (3, 2), (0, 2), (2, 1), (1, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_8() -> Vec<(usize, usize)> {
+    vec![(2, 5), (1, 5), (3, 4), (0, 4), (2, 3), (1, 3), (3, 2), (0, 2), (2, 1), (1, 1)]
+
 }
 
-fn get_picture_of_9<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(2, 5), (1, 5), (3, 4), (0, 4), (3, 3), (2, 3), (1, 3), (3, 2), (2, 1), (1, 1),
-                  (0, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_9() -> Vec<(usize, usize)> {
+    vec![(2, 5), (1, 5), (3, 4), (0, 4), (3, 3), (2, 3), (1, 3), (3, 2), (2, 1), (1, 1), (0, 1)]
+
 }
 
-fn get_picture_of_0<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(2, 5), (1, 5), (3, 4), (0, 4), (3, 3), (0, 3), (3, 2), (0, 2), (2, 1), (1, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_0() -> Vec<(usize, usize)> {
+    vec![(2, 5), (1, 5), (3, 4), (0, 4), (3, 3), (0, 3), (3, 2), (0, 2), (2, 1), (1, 1)]
+
 }
 
-fn get_picture_of_minus<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(3, 3), (2, 3), (1, 3), (0, 3)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_minus() -> Vec<(usize, usize)> {
+    vec![(3, 3), (2, 3), (1, 3), (0, 3)]
+
 }
 
-fn get_picture_of_point<'a>(shift: usize) -> Box<Iterator<Item = DisplayPoint> + 'a> {
-    Box::new(vec![(2, 1), (1, 1)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: shift + x,
-                y: y,
-            }
-        }))
+fn get_picture_of_point() -> Vec<(usize, usize)> {
+    vec![(2, 1), (1, 1)]
+
 }
