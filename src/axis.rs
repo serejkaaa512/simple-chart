@@ -65,7 +65,7 @@ fn calculate_axis_arrow(size: usize) -> Vec<DisplayPoint> {
 fn calculate_axis_ticks_params(max: f64,
                                min: f64,
                                total_size: usize)
-                               -> (f64, usize, usize, f64, u8, u8) {
+                               -> (f64, f64, usize, f64, u8, u8) {
     let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_ARROW;
     let (s_max, kzc) = determine_max_numbers_count(max, min);
     let k_i = calculate_intervals_count(available_size, s_max);
@@ -77,7 +77,7 @@ fn calculate_axis_ticks_params(max: f64,
 
 
 fn create_ticks_points(c: f64,
-                       c_i: usize,
+                       c_i: f64,
                        start_shift: usize,
                        start_value: f64,
                        k_i: u8,
@@ -89,7 +89,8 @@ fn create_ticks_points(c: f64,
     for i in 0..k_i {
         let value = round((start_value + c * (i as f64)), kzc as i32);
         let value_s = &*value.to_string();
-        v.extend(tick::create_tick_with_label(start_shift + c_i * (i as usize),
+        let shift = (c_i * (i as f64)).round() as usize;
+        v.extend(tick::create_tick_with_label(start_shift + shift,
                                               value_s,
                                               inverse,
                                               opposite_size));
@@ -103,10 +104,10 @@ fn calculate_scale_interval(max: f64,
                             kzc: u8,
                             k_i: u8,
                             available_size: usize)
-                            -> (f64, usize) {
+                            -> (f64, f64) {
     let c = (max - min) / (k_i as f64);
     let c_round = round(c, kzc as i32);
-    let c_i = ((available_size as f64) * c / (max - min)) as usize;
+    let c_i = (available_size as f64) * c / (max - min);
     (c_round, c_i)
 }
 
