@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
 use BitMap;
+use Color;
 use line;
 use axis;
 
@@ -26,33 +27,29 @@ impl<'a> From<&'a (f64, f64)> for Point {
     }
 }
 
-
-
 #[derive(PartialEq, Clone, Copy)]
 pub struct DisplayPoint {
     pub x: usize,
     pub y: usize,
 }
 
-struct Color {
-    r: u8,
-    g: u8,
-    b: u8,
-    a: u8,
-}
+
+const BACKGROUND_COLOR: Color = Color {
+    r: 0xff,
+    g: 0xff,
+    b: 0xff,
+};
 
 const POINTS_COLOR: Color = Color {
     r: 0x00,
     g: 0x00,
     b: 0xff,
-    a: 0x00,
 };
 
 const AXIS_COLOR: Color = Color {
     r: 0x00,
     g: 0x00,
     b: 0x00,
-    a: 0x00,
 };
 
 pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphResult
@@ -80,17 +77,25 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 
     let line: Vec<DisplayPoint> = line::extrapolate(function).collect();
 
-    let size = width * height * 4;
+    let mut bmp = BitMap::new(width, height);
 
-    let mut pixs = vec![0xFFu8;  size];
+    let background_color_number = bmp.add_color(BACKGROUND_COLOR);
 
-    draw_pixels(&mut pixs, width, axis_x, AXIS_COLOR);
+    let points_color_number = bmp.add_color(POINTS_COLOR);
 
-    draw_pixels(&mut pixs, width, axis_y, AXIS_COLOR);
+    let axis_color_number = bmp.add_color(AXIS_COLOR);
 
-    draw_pixels(&mut pixs, width, line, POINTS_COLOR);
+    let size = width * height;
 
-    let bmp = BitMap::new().add_pixels(pixs, width, height);
+    let mut pixs = vec![background_color_number;  size];
+
+    draw_pixels(&mut pixs, width, axis_x, axis_color_number);
+
+    draw_pixels(&mut pixs, width, axis_y, axis_color_number);
+
+    draw_pixels(&mut pixs, width, line, points_color_number);
+
+    bmp.add_pixels(pixs);
 
     let byte_array = bmp.to_vec();
 
@@ -100,13 +105,10 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 }
 
 
-fn draw_pixels(pixs: &mut Vec<u8>, width: usize, points: Vec<DisplayPoint>, color: Color) {
+fn draw_pixels(pixs: &mut Vec<u8>, width: usize, points: Vec<DisplayPoint>, color: u8) {
     for p in points {
-        let i = (p.y * width + p.x) * 4;
-        pixs[i] = color.b;
-        pixs[i + 1] = color.g;
-        pixs[i + 2] = color.r;
-        pixs[i + 3] = color.a;
+        let i = p.y * width + p.x;
+        pixs[i] = color;
     }
 }
 
@@ -116,8 +118,6 @@ fn save_file_on_disc(bmp: Vec<u8>, path: &Path) -> GraphResult {
     try!(file.write_all(&bmp));
     Ok(())
 }
-
-
 
 
 fn convert_to_display_points<'b, T, P>(iter: T,

@@ -1,51 +1,62 @@
 use byteorder::{LittleEndian, WriteBytesExt};
 
+const HEADER_LENGHT: u32 = 14;
+const INFO_LENGHT: u32 = 124;
+const COLOR_SIZE: u32 = 4;
+const COLOR_TABLE_LENGTH_SIZE: u32 = 4;
+const RESERVED: u8 = 0;
+
+
 pub struct BitMap {
     header: BitMapHeader,
     info: BitMapInfo,
+    color_table: ColorTable,
     array: Vec<u8>,
 }
 
 impl Default for BitMap {
     fn default() -> Self {
-        Self::new()
+        Self::new(740, 480)
     }
 }
 
 impl BitMap {
-    pub fn new() -> Self {
-        BitMap {
+    pub fn new(width: usize, height: usize) -> Self {
+        let mut b = BitMap {
             header: BitMapHeader::new(),
             info: BitMapInfo::new(),
+            color_table: ColorTable::new(),
             array: vec![],
-        }
+        };
+
+        b.info.set_width(width as i32);
+        b.info.set_height(height as i32);
+
+        b
     }
 
-    pub fn add_pixels(self, pic: Vec<u8>, width: usize, height: usize) -> Self {
-        let header_len = BitMapHeader::len();
-        let info_len = BitMapInfo::len();
-        let file_lenght = (pic.len() as u32) + header_len + info_len;
-        let pixels_data_offset = header_len + info_len;
-
-        let header = self.header
-            .set_lenght(file_lenght as u32)
-            .set_data_offset(pixels_data_offset as u32);
-
-        let info = self.info
-            .set_width(width as i32)
-            .set_height(height as i32);
-
-        BitMap {
-            header: header,
-            info: info,
-            array: pic,
-        }
+    pub fn add_pixels(&mut self, pic: Vec<u8>) {
+        self.array = pic;
     }
 
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn add_color(&mut self, color: Color) -> u8 {
+        self.color_table.add_color(color);
+        self.info.clr_used += 1;
+        (self.info.clr_used) as u8
+    }
+
+    pub fn to_vec(&mut self) -> Vec<u8> {
         let mut bitmap = vec![]; // V5
+
+        let pixels_data_offset = HEADER_LENGHT + INFO_LENGHT + self.color_table.get_size();
+        self.header.set_data_offset(pixels_data_offset);
+
+        let file_lenght = pixels_data_offset + self.array.len() as u32;
+        self.header.set_lenght(file_lenght);
+
         bitmap.extend_from_slice(&self.header.to_vec());
         bitmap.extend_from_slice(&self.info.to_vec());
+        bitmap.extend_from_slice(&self.color_table.to_vec());
         bitmap.extend_from_slice(&self.array);
         bitmap
     }
@@ -53,7 +64,7 @@ impl BitMap {
 
 struct BitMapHeader {
     little_indian: u16,
-    file_lenght: u32,
+    file_length: u32,
     reserved: u32,
     f_off_bitsfield: u32,
 }
@@ -62,29 +73,25 @@ impl BitMapHeader {
     fn new() -> Self {
         BitMapHeader {
             little_indian: 0x4d42,
-            file_lenght: 0u32,
+            file_length: 0u32,
             reserved: 0u32,
             f_off_bitsfield: 0u32,
         }
     }
 
-    fn len() -> u32 {
-        14
-    }
-
-    fn set_lenght(self, lenght: u32) -> Self {
-        BitMapHeader { file_lenght: lenght, ..self }
+    fn set_lenght(&mut self, length: u32) {
+        self.file_length = length;
     }
 
 
-    fn set_data_offset(self, offset: u32) -> Self {
-        BitMapHeader { f_off_bitsfield: offset, ..self }
+    fn set_data_offset(&mut self, offset: u32) {
+        self.f_off_bitsfield = offset;
     }
 
     fn to_vec(&self) -> Vec<u8> {
         let mut header = vec![]; // V5
         header.write_u16::<LittleEndian>(self.little_indian).unwrap();
-        header.write_u32::<LittleEndian>(self.file_lenght).unwrap();
+        header.write_u32::<LittleEndian>(self.file_length).unwrap();
         header.write_u32::<LittleEndian>(self.reserved).unwrap();
         header.write_u32::<LittleEndian>(self.f_off_bitsfield).unwrap();
         header
@@ -92,7 +99,7 @@ impl BitMapHeader {
 }
 
 
-pub struct BitMapInfo {
+struct BitMapInfo {
     size: u32,
     width: i32,
     height: i32,
@@ -130,7 +137,7 @@ impl BitMapInfo {
             width: 0i32,
             height: 0i32,
             planes: 1u16,
-            bitcount: 32u16,
+            bitcount: 8u16,
             compression: 0u32,
             sizeimage: 0u32,
             xpels_per_meter: 3780i32, // 96 dpi
@@ -186,28 +193,65 @@ impl BitMapInfo {
         bmp_info.write_u32::<LittleEndian>(self.profile_data).unwrap(); // ProfileData
         bmp_info.write_u32::<LittleEndian>(self.profile_size).unwrap(); // ProfileSize
         bmp_info.write_u32::<LittleEndian>(self.reserved).unwrap(); // Reserved
+
         bmp_info
     }
 
-    fn len() -> u32 {
-        124
+    fn set_width(&mut self, width: i32) {
+        self.width = width;
     }
 
-    fn set_width(self, width: i32) -> Self {
-        let v = self.c_iexyztriple.clone();
-        BitMapInfo {
-            width: width,
-            c_iexyztriple: v,
-            ..self
+    fn set_height(&mut self, height: i32) {
+        self.height = height;
+    }
+}
+
+struct ColorTable {
+    count: u32,
+    table: Vec<u8>,
+}
+
+impl ColorTable {
+    fn new() -> ColorTable {
+        ColorTable {
+            count: 0,
+            table: vec![],
         }
     }
 
-    fn set_height(self, height: i32) -> Self {
-        let v = self.c_iexyztriple.clone();
-        BitMapInfo {
-            height: height,
-            c_iexyztriple: v,
-            ..self
+    fn add_color(&mut self, color: Color) {
+        self.count += 1;
+        self.table.append(&mut color.get_buffer());
+    }
+
+    fn get_size(&self) -> u32 {
+        if self.count == 0 {
+            256 * COLOR_SIZE + COLOR_TABLE_LENGTH_SIZE
+        } else {
+            self.count * COLOR_SIZE + COLOR_TABLE_LENGTH_SIZE
         }
+    }
+
+    fn to_vec(&self) -> Vec<u8> {
+        let mut v: Vec<u8> = vec![];
+        v.write_u32::<LittleEndian>(self.get_size() - COLOR_TABLE_LENGTH_SIZE).unwrap();
+        if self.count == 0 {
+            v.extend(&vec![0u8; 256 * (COLOR_SIZE as usize)]);
+        } else {
+            v.extend(&self.table);
+        }
+        v
+    }
+}
+
+pub struct Color {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+}
+
+impl Color {
+    fn get_buffer(&self) -> Vec<u8> {
+        vec![self.b, self.g, self.r, RESERVED]
     }
 }

@@ -11,4 +11,5 @@ mod axis;
 mod tick;
 
 pub use self::bitmap::BitMap;
+pub use self::bitmap::Color;
 pub use self::graph::DisplayPoint;
