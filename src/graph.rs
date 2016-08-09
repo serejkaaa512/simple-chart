@@ -137,8 +137,8 @@ fn convert_to_display_points<'b, T, P>(iter: T,
 
     Box::new(iter.map(move |p| {
         let p = p.into();
-        let mut id_x = ((p.x - min_x) / resolution_x).floor() as usize;
-        let mut id_y = ((p.y - min_y) / resolution_y).floor() as usize;
+        let mut id_x = ((p.x - min_x) / resolution_x).round() as usize;
+        let mut id_y = ((p.y - min_y) / resolution_y).round() as usize;
         if id_x == width {
             id_x -= 1;
         }

@@ -66,7 +66,7 @@ fn calculate_axis_ticks_params(max: f64,
                                min: f64,
                                total_size: usize)
                                -> (f64, f64, usize, f64, u8, u8) {
-    let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_ARROW;
+    let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_NUMBER - W_ARROW;
     let (s_max, kzc) = determine_max_numbers_count(max, min);
     let k_i = calculate_intervals_count(available_size, s_max);
     let (c, c_i) = calculate_scale_interval(max, min, kzc, k_i, available_size);

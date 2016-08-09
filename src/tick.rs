@@ -27,7 +27,7 @@ pub fn create_mark(shift: usize, opposite_size: usize) -> Vec<DisplayPoint> {
         v.push(DisplayPoint { x: shift, y: i })
     }
 
-    for j in (opposite_shift + H_ARROW_HALF)..(opposite_size - opposite_shift - BORDER) {
+    for j in (opposite_shift + H_ARROW_HALF)..(opposite_size - H_ARROW_HALF) {
         if j % 2 == 0 {
             continue;
         }
