@@ -2,6 +2,8 @@
 extern crate test;
 extern crate byteorder;
 #[macro_use]
+extern crate quick_error;
+#[macro_use]
 pub mod macros;
 pub mod graph;
 pub mod bitmap;

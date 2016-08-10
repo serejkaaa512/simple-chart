@@ -39,8 +39,10 @@ impl BitMap {
         self.array = pic;
     }
 
-    pub fn add_color(&mut self, color: Color) -> u8 {
-        self.color_table.add_color(color);
+    pub fn add_color<C>(&mut self, color: C) -> u8
+        where C: Into<Color>
+    {
+        self.color_table.add_color(color.into());
         self.info.clr_used += 1;
         (self.info.clr_used) as u8
     }
@@ -236,9 +238,9 @@ impl ColorTable {
         let mut v: Vec<u8> = vec![];
         v.write_u32::<LittleEndian>(self.get_size() - COLOR_TABLE_LENGTH_SIZE).unwrap();
         if self.count == 0 {
-            v.extend(&vec![0u8; 256 * (COLOR_SIZE as usize)]);
+            v.extend_from_slice(&[0u8; 256 * (COLOR_SIZE as usize)]);
         } else {
-            v.extend(&self.table);
+            v.extend_from_slice(&self.table);
         }
         v
     }
@@ -253,5 +255,16 @@ pub struct Color {
 impl Color {
     fn get_buffer(&self) -> Vec<u8> {
         vec![self.b, self.g, self.r, RESERVED]
+    }
+}
+
+// #ffaabb
+impl<'a> From<&'a str> for Color {
+    fn from(string: &str) -> Color {
+        let s = &string.to_lowercase();
+        let r = u8::from_str_radix(&s[1..3], 16).unwrap();
+        let g = u8::from_str_radix(&s[3..5], 16).unwrap();
+        let b = u8::from_str_radix(&s[5..7], 16).unwrap();
+        Color { r: r, g: g, b: b }
     }
 }

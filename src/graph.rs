@@ -1,10 +1,6 @@
-use std::error::Error;
 use std::f64;
-use std::io::prelude::*;
-use std::fs::File;
-use std::path::Path;
+
 use BitMap;
-use Color;
 use line;
 use axis;
 
@@ -13,7 +9,23 @@ const W_NUMBER: usize = 4;     //number width in pixel
 const H_NUMBER: usize = 5;     //number height in pixels
 const W_BORDER: usize = 1;     //space around graph width
 
-pub type GraphResult = Result<(), Box<Error>>;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum GraphError {
+        NotEnoughPoints {
+            description("There are not enough points to display on graph.")
+        }
+        NotEnoughSpace {
+            description("There are not enough width and height to form graph with axis.")
+        }
+        NonUniquePoints {
+            description("There are only one unique point. Can't construct line.")
+        }
+    }
+}
+
+pub type GraphResult = Result<Vec<u8>, GraphError>;
 
 #[derive(Clone, Copy)]
 pub struct Point {
@@ -27,35 +39,44 @@ impl<'a> From<&'a (f64, f64)> for Point {
     }
 }
 
+impl From<(f64, f64)> for Point {
+    fn from(t: (f64, f64)) -> Point {
+        Point { x: t.0, y: t.1 }
+    }
+}
+
 #[derive(PartialEq, Clone, Copy)]
 pub struct DisplayPoint {
     pub x: usize,
     pub y: usize,
 }
 
+const BACKGROUND_COLOR: &'static str = "#ffffff";
 
-const BACKGROUND_COLOR: Color = Color {
-    r: 0xff,
-    g: 0xff,
-    b: 0xff,
-};
+const POINTS_COLOR: &'static str = "#0000ff";
 
-const POINTS_COLOR: Color = Color {
-    r: 0x00,
-    g: 0x00,
-    b: 0xff,
-};
+const AXIS_COLOR: &'static str = "#000000";
 
-const AXIS_COLOR: Color = Color {
-    r: 0x00,
-    g: 0x00,
-    b: 0x00,
-};
 
-pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphResult
+pub fn create<T, P>(iter: T, width: usize, height: usize) -> GraphResult
     where T: Iterator<Item = P> + Clone,
-          P: Into<Point>
+          P: Into<Point> + PartialEq
 {
+
+    if width < (H_NUMBER + W_NUMBER + W_ARROW + 2 * W_BORDER) ||
+       height < (H_NUMBER + W_NUMBER + W_ARROW + 2 * W_BORDER) {
+        return Err(GraphError::NotEnoughSpace);
+    }
+
+    if iter.clone().nth(1).is_none() {
+        return Err(GraphError::NotEnoughPoints);
+    }
+
+    let first = iter.clone().nth(0).unwrap();
+    if iter.clone().skip(1).any(move |p| p != first) == false {
+        return Err(GraphError::NonUniquePoints);
+    }
+
     let (max_x, min_x, max_y, min_y) = calculate_max_min(iter.clone());
 
     let axis_x = axis::create_axis(max_x, min_x, width, false, height);
@@ -97,11 +118,7 @@ pub fn create<T, P>(iter: T, path: &str, width: usize, height: usize) -> GraphRe
 
     bmp.add_pixels(pixs);
 
-    let byte_array = bmp.to_vec();
-
-    try!(save_file_on_disc(byte_array, Path::new(&*path)));
-
-    Ok(())
+    Ok(bmp.to_vec())
 }
 
 
@@ -112,12 +129,6 @@ fn draw_pixels(pixs: &mut Vec<u8>, width: usize, points: Vec<DisplayPoint>, colo
     }
 }
 
-
-fn save_file_on_disc(bmp: Vec<u8>, path: &Path) -> GraphResult {
-    let mut file = try!(File::create(&path));
-    try!(file.write_all(&bmp));
-    Ok(())
-}
 
 
 fn convert_to_display_points<'b, T, P>(iter: T,
@@ -179,11 +190,36 @@ fn calculate_max_min<'b, T, P>(iter: T) -> (f64, f64, f64, f64)
 }
 
 #[test]
-fn it_works() {
+fn not_enough_space_test() {
     let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
-    let _ = create(p.iter(), "/example/graph.bmp", 740, 480);
+    let result = create(p.iter(), 10, 15);
+    assert_eq!(result.unwrap_err().to_string(),
+               "There are not enough width and height to form graph with axis.");
 }
 
+#[test]
+fn not_enough_points_test() {
+    let p = vec![];
+    let result = create(p.iter(), 100, 150);
+    assert_eq!(result.unwrap_err().to_string(),
+               "There are not enough points to display on graph.");
+}
+
+#[test]
+fn one_point_test() {
+    let p = vec![(1f64, 1f64)];
+    let result = create(p.iter(), 100, 150);
+    assert_eq!(result.unwrap_err().to_string(),
+               "There are not enough points to display on graph.");
+}
+
+#[test]
+fn two_identical_point_test() {
+    let p = vec![(1f64, 1f64), (1f64, 1f64)];
+    let result = create(p.iter(), 100, 150);
+    assert_eq!(result.unwrap_err().to_string(),
+               "There are only one unique point. Can't construct line.");
+}
 
 #[test]
 fn can_create_array() {
@@ -203,7 +239,7 @@ mod tests {
     fn create_graph_bench(b: &mut Bencher) {
         b.iter(|| {
             let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
-            let _ = create(p.iter(), "graph.bmp", 740, 480);
+            let _ = create(p.iter(), 740, 480);
         })
     }
 }

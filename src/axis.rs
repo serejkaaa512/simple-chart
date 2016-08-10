@@ -199,7 +199,7 @@ fn calculate_intervals_count_test_more_10() {
 fn calculate_scale_interval_test() {
     let (c, c_i) = calculate_scale_interval(100.0, 0.0, 0, 2, 89);
     assert_eq!(c, 50.0);
-    assert_eq!(c_i, 44);
+    assert_eq!(c_i, 44.5);
 }
 
 
