@@ -9,10 +9,6 @@ const W_NUMBER: usize = 4;     //number width in pixel
 const H_NUMBER: usize = 5;     //number height in pixels
 const W_BORDER: usize = 1;     //space around graph width
 
-const BACKGROUND_COLOR: &'static str = "#ffffff";
-const POINTS_COLOR: &'static str = "#0000ff";
-const AXIS_COLOR: &'static str = "#000000";
-
 
 quick_error! {
     #[derive(Debug)]
@@ -58,6 +54,24 @@ pub struct DisplayPoint {
 }
 
 
+
+pub struct Settings<T, P>
+    where T: Iterator<Item = P> + Clone,
+          P: Into<Point> 
+          + PartialEq {
+
+}
+
+const BACKGROUND_COLOR: &'static str = "#ffffff";
+
+const POINTS_COLOR: &'static str = "#0000ff";
+
+
+const AXIS_COLOR: &'static str = "#000000";
+
+
+
+
 pub fn create<T, P>(iter: T, width: usize, height: usize) -> GraphResult
     where T: Iterator<Item = P> + Clone,
           P: Into<Point> + PartialEq
@@ -87,12 +101,11 @@ pub fn create<T, P>(iter: T, width: usize, height: usize) -> GraphResult
         .map(|p| DisplayPoint { x: p.y, y: p.x })
         .collect();
 
-    let func_left_shift = W_BORDER + W_NUMBER + H_NUMBER;
-    let func_right_shift = W_ARROW;
+    let func_shift = W_BORDER + W_NUMBER + H_NUMBER;
     let function = convert_to_display_points(iter,
-                                             width - (func_left_shift + func_right_shift),
-                                             height - (func_left_shift + func_right_shift),
-                                             func_left_shift,
+                                             width - (func_shift + W_ARROW),
+                                             height - (func_shift + W_ARROW),
+                                             func_shift,
                                              min_x,
                                              max_x,
                                              min_y,

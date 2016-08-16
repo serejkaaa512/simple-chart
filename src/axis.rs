@@ -204,6 +204,7 @@ fn calculate_scale_interval_test() {
 
 
 
+
 #[cfg(test)]
 mod tests {
     use super::*;

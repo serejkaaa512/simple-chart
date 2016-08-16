@@ -1,5 +1,5 @@
-#![feature(test)]
-extern crate test;
+// #![feature(test)]
+// extern crate test;
 extern crate byteorder;
 #[macro_use]
 extern crate quick_error;
