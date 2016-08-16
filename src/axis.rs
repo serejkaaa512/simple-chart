@@ -16,14 +16,14 @@ pub fn create_axis(max: f64,
                    size: usize,
                    inverse: bool,
                    opposite_size: usize)
-                   -> Vec<DisplayPoint> {
+                   -> (Vec<DisplayPoint>, f64, f64) {
 
-    let (c, c_i, start_shift, start_value, k_i, kzc) = calculate_axis_ticks_params(max, min, size);
+    let (c, c_i, start_shift, min_value, max_value, k_i, kzc) = calculate_axis_ticks_params(max, min, size);
     let mut v: Vec<DisplayPoint> = vec![];
     let ticks = create_ticks_points(c,
                                     c_i,
                                     start_shift,
-                                    start_value,
+                                    min_value,
                                     k_i,
                                     inverse,
                                     opposite_size,
@@ -33,7 +33,7 @@ pub fn create_axis(max: f64,
     v.extend(ticks);
     v.extend(line);
     v.extend(arrow);
-    v
+    (v, min_value, max_value)
 }
 
 
@@ -65,14 +65,17 @@ fn calculate_axis_arrow(size: usize) -> Vec<DisplayPoint> {
 fn calculate_axis_ticks_params(max: f64,
                                min: f64,
                                total_size: usize)
-                               -> (f64, f64, usize, f64, u8, u8) {
+                               -> (f64, f64, usize, f64, f64, u8, u8) {
     let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_NUMBER - W_ARROW;
     let (s_max, kzc) = determine_max_numbers_count(max, min);
     let k_i = calculate_intervals_count(available_size, s_max);
-    let (c, c_i) = calculate_scale_interval(max, min, kzc, k_i, available_size);
+
+    let min_value = round(min, kzc as i32);
+    let max_value = round(max, kzc as i32);
+
+    let (c, c_i) = calculate_scale_interval(max_value, min_value, kzc, k_i, available_size);
     let start_shift = W_BORDER + H_NUMBER + W_NUMBER;
-    let start_value = round(min, kzc as i32);
-    (c, c_i, start_shift, start_value, k_i, kzc)
+    (c, c_i, start_shift, min_value, max_value, k_i, kzc)
 }
 
 
@@ -113,7 +116,7 @@ fn calculate_scale_interval(max: f64,
 
 fn round(value: f64, kzc: i32) -> f64 {
     let k = 10f64.powi(kzc);
-    (value * k).ceil() / k
+    (value * k).round() / k
 }
 
 fn determine_max_numbers_count(max: f64, min: f64) -> (u8, u8) {

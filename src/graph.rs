@@ -80,9 +80,11 @@ pub fn create<T, P>(iter: T, width: usize, height: usize) -> GraphResult
 
     let (max_x, min_x, max_y, min_y) = calculate_max_min(iter.clone());
 
-    let axis_x = axis::create_axis(max_x, min_x, width, false, height);
+    let (axis_x, min_x_axis_value, max_x_axis_value) = axis::create_axis(max_x, min_x, width, false, height);
 
-    let axis_y: Vec<DisplayPoint> = axis::create_axis(max_y, min_y, height, true, width)
+    let (axis_y_converted, min_y_axis_value, max_y_axis_value) = axis::create_axis(max_y, min_y, height, true, width);
+
+    let axis_y: Vec<DisplayPoint> = axis_y_converted 
         .into_iter()
         .map(|p| DisplayPoint { x: p.y, y: p.x })
         .collect();
@@ -93,10 +95,10 @@ pub fn create<T, P>(iter: T, width: usize, height: usize) -> GraphResult
                                              width - (func_left_shift + func_right_shift),
                                              height - (func_left_shift + func_right_shift),
                                              func_left_shift,
-                                             min_x,
-                                             max_x,
-                                             min_y,
-                                             max_y);
+                                             min_x_axis_value,
+                                             max_x_axis_value,
+                                             min_y_axis_value,
+                                             max_y_axis_value);
 
     let line: Vec<DisplayPoint> = line::extrapolate(function).collect();
 
