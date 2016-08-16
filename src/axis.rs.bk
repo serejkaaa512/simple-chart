@@ -10,7 +10,7 @@ const W_NUMBER: usize = 4;     //number width in pixel
 const H_NUMBER: usize = 5;     //number height in pixels
 const MAX_INTERVALS: u8 = 10;   // maximum intervals count
 
-const START_SHIFT: usize = W_BORDER + H_NUMBER + W_NUMBER;
+const START_SHIFT:usize = W_BORDER + H_NUMBER + W_NUMBER;
 
 pub fn create_axis(max: f64,
                    min: f64,
@@ -21,7 +21,13 @@ pub fn create_axis(max: f64,
 
     let (c, c_i, min_value, max_value, k_i, kzc) = calculate_axis_ticks_params(max, min, size);
     let mut v: Vec<DisplayPoint> = vec![];
-    let ticks = create_ticks_points(c, c_i, min_value, k_i, reverse_number, opposite_size, kzc);
+    let ticks = create_ticks_points(c,
+                                    c_i,
+                                    min_value,
+                                    k_i,
+                                    reverse_number,
+                                    opposite_size,
+                                    kzc);
     let line = calculate_axis_line(size);
     let arrow = calculate_axis_arrow(size);
     v.extend(ticks);
@@ -100,9 +106,9 @@ fn round(value: f64, kzc: i32) -> f64 {
     (value * k).round() / k
 }
 
-fn calc<F>(f: F, value: f64, kzc: i32) -> f64
-    where F: Fn(f64) -> f64
-{
+fn calc <F> (f: F, value: f64, kzc:i32) -> f64 
+    where F: Fn(f64) -> f64 
+    {
     let k = 10f64.powi(kzc);
     let new_value = f(value * k);
     new_value / k
@@ -113,7 +119,11 @@ fn determine_max_numbers_count(max: f64, min: f64) -> (u8, u8) {
     let c_max = get_numbers_count(max as i64);
     let c_min = get_numbers_count(min as i64);
 
-    let maxc = if c_max >= c_min { c_max } else { c_min };
+    let maxc = if c_max >= c_min {
+        c_max
+    } else {
+        c_min
+    };
 
     if d > 10.0 {
         (maxc, 0)

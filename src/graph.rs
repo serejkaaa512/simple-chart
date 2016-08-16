@@ -9,6 +9,9 @@ const W_NUMBER: usize = 4;     //number width in pixel
 const H_NUMBER: usize = 5;     //number height in pixels
 const W_BORDER: usize = 1;     //space around graph width
 
+const LEFT_SHIFT: usize = W_BORDER + W_NUMBER + H_NUMBER;
+const RIGHT_SHIFT: usize = W_ARROW;
+
 const BACKGROUND_COLOR: &'static str = "#ffffff";
 const POINTS_COLOR: &'static str = "#0000ff";
 const AXIS_COLOR: &'static str = "#000000";
@@ -80,21 +83,20 @@ pub fn create<T, P>(iter: T, width: usize, height: usize) -> GraphResult
 
     let (max_x, min_x, max_y, min_y) = calculate_max_min(iter.clone());
 
-    let (axis_x, min_x_axis_value, max_x_axis_value) = axis::create_axis(max_x, min_x, width, false, height);
+    let (axis_x, min_x_axis_value, max_x_axis_value) =
+        axis::create_axis(max_x, min_x, width, false, height);
 
-    let (axis_y_converted, min_y_axis_value, max_y_axis_value) = axis::create_axis(max_y, min_y, height, true, width);
+    let (axis_y_converted, min_y_axis_value, max_y_axis_value) =
+        axis::create_axis(max_y, min_y, height, true, width);
 
-    let axis_y: Vec<DisplayPoint> = axis_y_converted 
-        .into_iter()
+    let axis_y: Vec<DisplayPoint> = axis_y_converted.into_iter()
         .map(|p| DisplayPoint { x: p.y, y: p.x })
         .collect();
 
-    let func_left_shift = W_BORDER + W_NUMBER + H_NUMBER;
-    let func_right_shift = W_ARROW;
+
     let function = convert_to_display_points(iter,
-                                             width - (func_left_shift + func_right_shift),
-                                             height - (func_left_shift + func_right_shift),
-                                             func_left_shift,
+                                             width,
+                                             height,
                                              min_x_axis_value,
                                              max_x_axis_value,
                                              min_y_axis_value,
@@ -135,10 +137,10 @@ fn draw_pixels(pixs: &mut Vec<u8>, width: usize, points: Vec<DisplayPoint>, colo
 
 
 
+
 fn convert_to_display_points<'b, T, P>(iter: T,
                                        width: usize,
                                        height: usize,
-                                       func_shift: usize,
                                        min_x: f64,
                                        max_x: f64,
                                        min_y: f64,
@@ -147,8 +149,11 @@ fn convert_to_display_points<'b, T, P>(iter: T,
     where T: 'b + Iterator<Item = P>,
           P: Into<Point>
 {
-    let resolution_x: f64 = (max_x - min_x) / (width as f64);
-    let resolution_y: f64 = (max_y - min_y) / (height as f64);
+    let width_available = width - LEFT_SHIFT - RIGHT_SHIFT;
+    let height_available = height - LEFT_SHIFT - RIGHT_SHIFT;
+
+    let resolution_x: f64 = (max_x - min_x) / (width_available as f64);
+    let resolution_y: f64 = (max_y - min_y) / (height_available as f64);
 
     Box::new(iter.map(move |p| {
         let p = p.into();
@@ -161,8 +166,8 @@ fn convert_to_display_points<'b, T, P>(iter: T,
             id_y -= 1;
         }
         DisplayPoint {
-            x: (id_x + func_shift),
-            y: (id_y + func_shift),
+            x: (id_x + LEFT_SHIFT),
+            y: (id_y + LEFT_SHIFT),
         }
     }))
 
@@ -228,7 +233,7 @@ fn two_identical_point_test() {
 #[test]
 fn can_create_array() {
     let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
-    let display_points = convert_to_display_points(p.iter(), 9, 9, 0, 0.0, 10.0, 0.0, 100.0);
+    let display_points = convert_to_display_points(p.iter(), 19, 19, 0.0, 10.0, 0.0, 100.0);
     for p in display_points {
         println!("x: {}, y: {}", p.x, p.y);
     }

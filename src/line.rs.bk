@@ -17,8 +17,16 @@ impl Line {
     pub fn new(f: DisplayPoint, l: DisplayPoint) -> Self {
         let dx = (l.x as i32 - f.x as i32).abs() + 1;
         let dy = (l.y as i32 - f.y as i32).abs() + 1;
-        let x_sign = if l.x > f.x { 1i32 } else { -1i32 };
-        let y_sign = if l.y > f.y { 1i32 } else { -1i32 };
+        let x_sign = if l.x > f.x {
+            1i32
+        } else {
+            -1i32
+        };
+        let y_sign = if l.y > f.y {
+            1i32
+        } else {
+            -1i32
+        };
         let step = if dx >= dy {
             dx as f32 / dy as f32
         } else {
