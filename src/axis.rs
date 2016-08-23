@@ -9,89 +9,108 @@ const W_ARROW: usize = 4;      //width of arrow
 const W_NUMBER: usize = 4;     //number width in pixel
 const H_NUMBER: usize = 5;     //number height in pixels
 const MAX_INTERVALS: u8 = 10;   // maximum intervals count
-
 const START_SHIFT: usize = W_BORDER + H_NUMBER + W_NUMBER;
+const DEFAULT_MIN_VALUE: f64 = 0f64;
+const DEFAULT_MAX_VALUE: f64 = 1f64;
+const DEFAULT_SIZE: usize = 100;
 
-pub fn create_axis(max: f64,
-                   min: f64,
-                   size: usize,
-                   reverse_number: bool,
-                   opposite_size: usize)
-                   -> (Vec<DisplayPoint>, f64, f64) {
-
-    let (c, c_i, min_value, max_value, k_i, kzc) = calculate_axis_ticks_params(max, min, size);
-    let mut v: Vec<DisplayPoint> = vec![];
-    let ticks = create_ticks_points(c, c_i, min_value, k_i, reverse_number, opposite_size, kzc);
-    let line = calculate_axis_line(size);
-    let arrow = calculate_axis_arrow(size);
-    v.extend(ticks);
-    v.extend(line);
-    v.extend(arrow);
-    (v, min_value, max_value)
+#[derive(Debug, Clone)]
+pub struct Axis {
+    pub min_value: f64,
+    pub max_value: f64,
+    c: f64,
+    pub c_i: f64,
+    pub k_i: u8,
+    kzc: u8,
+    size: usize,
+    rotated: bool,
 }
 
 
-fn calculate_axis_line(size: usize) -> Vec<DisplayPoint> {
-    let mut v = vec![];
-    for x in START_SHIFT..size {
-        v.push(DisplayPoint {
-            x: x,
-            y: START_SHIFT,
-        });
+impl Axis {
+    pub fn new() -> Self {
+        Axis {
+            min_value: DEFAULT_MIN_VALUE,
+            max_value: DEFAULT_MAX_VALUE,
+            c: 0f64,
+            c_i: 0f64,
+            k_i: 0u8,
+            kzc: 0u8,
+            size: DEFAULT_SIZE,
+            rotated: false,
+        }
     }
-    v
-}
-
-fn calculate_axis_arrow(size: usize) -> Vec<DisplayPoint> {
-
-    vec![(4, 13), (3, 12), (2, 11), (4, 7), (3, 8), (2, 9)]
-        .into_iter()
-        .map(move |(x, y)| {
-            DisplayPoint {
-                x: size - x,
-                y: y,
-            }
-        })
-        .collect()
-}
-
-fn calculate_axis_ticks_params(max: f64,
-                               min: f64,
-                               total_size: usize)
-                               -> (f64, f64, f64, f64, u8, u8) {
-    let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_NUMBER - W_ARROW;
-    let (s_max, kzc) = determine_max_numbers_count(max, min);
-    let k_i = calculate_intervals_count(available_size, s_max);
-
-    let min_value = calc(f64::floor, min, kzc as i32);
-    let max_value = calc(f64::ceil, max, kzc as i32);
-    let c = (max_value - min_value) / (k_i as f64);
-    let c_ceil = calc(f64::ceil, c, kzc as i32);
-    let max_value = min_value + c_ceil * (k_i as f64);
-    let c_i = (available_size as f64) * c_ceil / (max_value - min_value);
-    (c_ceil, c_i, min_value, max_value, k_i, kzc)
-}
-
-
-fn create_ticks_points(c: f64,
-                       c_i: f64,
-                       start_value: f64,
-                       k_i: u8,
-                       inverse: bool,
-                       opposite_size: usize,
-                       kzc: u8)
-                       -> Vec<DisplayPoint> {
-    let mut v: Vec<DisplayPoint> = vec![];
-    for i in 0..k_i {
-        let value = round((start_value + c * (i as f64)), kzc as i32);
-        let value_s = &*value.to_string();
-        let shift = (c_i * (i as f64)).round() as usize;
-        v.extend(tick::create_tick_with_label(START_SHIFT + shift,
-                                              value_s,
-                                              inverse,
-                                              opposite_size));
+    pub fn rotate(self) -> Self {
+        Axis { rotated: true, ..self }
     }
-    v
+
+    pub fn create_points(&self) -> Vec<DisplayPoint> {
+        let mut v: Vec<DisplayPoint> = vec![];
+        let ticks = self.create_ticks_points();
+        let line = self.calculate_axis_line();
+        let arrow = self.calculate_axis_arrow();
+        v.extend(ticks);
+        v.extend(line);
+        v.extend(arrow);
+        if self.rotated {
+            v.into_iter()
+                .map(|p| DisplayPoint { x: p.y, y: p.x })
+                .collect::<Vec<DisplayPoint>>()
+        } else {
+            v
+        }
+    }
+
+    pub fn calculate_axis(max: f64, min: f64, total_size: usize) -> Axis {
+        let mut axis = Self::new();
+        let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_NUMBER - W_ARROW;
+        let (s_max, kzc) = determine_max_numbers_count(max, min);
+        axis.kzc = kzc;
+        axis.k_i = calculate_intervals_count(available_size, s_max);
+        axis.min_value = calc(f64::floor, min, axis.kzc as i32);
+        axis.max_value = calc(f64::ceil, max, axis.kzc as i32);
+        let c = (axis.max_value - axis.min_value) / (axis.k_i as f64);
+        axis.c = calc(f64::ceil, c, axis.kzc as i32);
+        axis.max_value = axis.min_value + axis.c * (axis.k_i as f64);
+        axis.c_i = (available_size as f64) * axis.c / (axis.max_value - axis.min_value);
+        axis.size = total_size;
+        axis
+    }
+
+    fn create_ticks_points(&self) -> Vec<DisplayPoint> {
+        let mut v: Vec<DisplayPoint> = vec![];
+        for i in 0..self.k_i {
+            let value = round((self.min_value + self.c * (i as f64)), self.kzc as i32);
+            let value_s = &*value.to_string();
+            let shift = (self.c_i * (i as f64)).round() as usize;
+            v.extend(tick::create_tick_with_label(START_SHIFT + shift, value_s, self.rotated));
+        }
+        v
+    }
+
+    fn calculate_axis_line(&self) -> Vec<DisplayPoint> {
+        let mut v = vec![];
+        for x in START_SHIFT..self.size {
+            v.push(DisplayPoint {
+                x: x,
+                y: START_SHIFT,
+            });
+        }
+        v
+    }
+
+
+    fn calculate_axis_arrow(&self) -> Vec<DisplayPoint> {
+        vec![(4, 13), (3, 12), (2, 11), (4, 7), (3, 8), (2, 9)]
+            .into_iter()
+            .map(move |(x, y)| {
+                DisplayPoint {
+                    x: self.size - x,
+                    y: y,
+                }
+            })
+            .collect()
+    }
 }
 
 
@@ -191,6 +210,9 @@ mod tests {
 
     #[bench]
     fn create_axis_bench(b: &mut Bencher) {
-        b.iter(|| create_axis(100.0, 0.0, 1000, false, 1000))
+        b.iter(|| {
+            let axis = Axis::calculate_axis(100.0, 0.0, 1000);
+            let _ = axis.create_points();
+        })
     }
 }

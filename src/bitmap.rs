@@ -3,10 +3,9 @@ use byteorder::{LittleEndian, WriteBytesExt};
 const HEADER_LENGHT: u32 = 14;
 const INFO_LENGHT: u32 = 124;
 const COLOR_SIZE: u32 = 4;
-const COLOR_TABLE_LENGTH_SIZE: u32 = 4;
 const RESERVED: u8 = 0;
 
-
+#[derive(Debug)]
 pub struct BitMap {
     header: BitMapHeader,
     info: BitMapInfo,
@@ -35,16 +34,18 @@ impl BitMap {
         b
     }
 
-    pub fn add_pixels(&mut self, pic: Vec<u8>) {
-        self.array = pic;
+    pub fn add_pixels(&mut self, pic: &[u8]) {
+        self.array.extend_from_slice(pic);
     }
 
     pub fn add_color<C>(&mut self, color: C) -> u8
         where C: Into<Color>
     {
-        self.color_table.add_color(color.into());
+        let color = color.into();
+        self.color_table.add_color(color);
+
         self.info.clr_used += 1;
-        (self.info.clr_used) as u8
+        (self.info.clr_used - 1) as u8
     }
 
     pub fn to_vec(&mut self) -> Vec<u8> {
@@ -64,6 +65,7 @@ impl BitMap {
     }
 }
 
+#[derive(Debug)]
 struct BitMapHeader {
     little_indian: u16,
     file_length: u32,
@@ -100,7 +102,7 @@ impl BitMapHeader {
     }
 }
 
-
+#[derive(Debug)]
 struct BitMapInfo {
     size: u32,
     width: i32,
@@ -208,6 +210,7 @@ impl BitMapInfo {
     }
 }
 
+#[derive(Debug)]
 struct ColorTable {
     count: u32,
     table: Vec<u8>,
@@ -227,25 +230,20 @@ impl ColorTable {
     }
 
     fn get_size(&self) -> u32 {
-        if self.count == 0 {
-            256 * COLOR_SIZE + COLOR_TABLE_LENGTH_SIZE
-        } else {
-            self.count * COLOR_SIZE + COLOR_TABLE_LENGTH_SIZE
-        }
+        256 * COLOR_SIZE
     }
 
     fn to_vec(&self) -> Vec<u8> {
         let mut v: Vec<u8> = vec![];
-        v.write_u32::<LittleEndian>(self.get_size() - COLOR_TABLE_LENGTH_SIZE).unwrap();
-        if self.count == 0 {
-            v.extend_from_slice(&[0u8; 256 * (COLOR_SIZE as usize)]);
-        } else {
-            v.extend_from_slice(&self.table);
+        v.extend_from_slice(&self.table);
+        for _ in self.count..256 {
+            v.write_u32::<LittleEndian>(0).unwrap();
         }
         v
     }
 }
 
+#[derive(Debug)]
 pub struct Color {
     pub r: u8,
     pub g: u8,

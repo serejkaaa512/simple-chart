@@ -7,19 +7,15 @@ const BORDER: usize = 1;     //space around graph width
 const H_ARROW_HALF: usize = 3;      //half arrow height
 
 
-pub fn create_tick_with_label(shift: usize,
-                              value: &str,
-                              reverse_number: bool,
-                              opposite_size: usize)
-                              -> Vec<DisplayPoint> {
+pub fn create_tick_with_label(shift: usize, value: &str, rotate_number: bool) -> Vec<DisplayPoint> {
     let mut v: Vec<DisplayPoint> = vec![];
-    v.extend(create_mark(shift, opposite_size));
-    v.extend(create_label(shift - W_NUMBER, value, reverse_number));
+    v.extend(create_mark(shift));
+    v.extend(create_label(shift - W_NUMBER, value, rotate_number));
     v
 }
 
 
-pub fn create_mark(shift: usize, opposite_size: usize) -> Vec<DisplayPoint> {
+fn create_mark(shift: usize) -> Vec<DisplayPoint> {
     let mut v = vec![];
     let opposite_shift = BORDER + H_NUMBER + BORDER;
 
@@ -27,21 +23,14 @@ pub fn create_mark(shift: usize, opposite_size: usize) -> Vec<DisplayPoint> {
         v.push(DisplayPoint { x: shift, y: i })
     }
 
-    for j in (opposite_shift + H_ARROW_HALF)..(opposite_size - H_ARROW_HALF) {
-        if j % 2 == 0 {
-            continue;
-        }
-        v.push(DisplayPoint { x: shift, y: j })
-    }
     v
 }
 
 
-
-pub fn create_label(shift: usize, value: &str, reverse_number: bool) -> Vec<DisplayPoint> {
+fn create_label(shift: usize, value: &str, rotate_number: bool) -> Vec<DisplayPoint> {
     let mut char_position = shift;
     let mut v = vec![];
-    if reverse_number {
+    if rotate_number {
         for char_ in value.chars() {
             let char_v = get_char_picture(char_).into_iter().map(move |p| {
                 DisplayPoint {
