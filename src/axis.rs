@@ -161,52 +161,55 @@ fn calculate_intervals_count(available_size: usize, s_max: u8) -> u8 {
 }
 
 
-#[test]
-fn get_numbers_count_test() {
-    let val = 34234;
-    let c = get_numbers_count(val);
-    assert_eq!(c, 5);
-}
-
-#[test]
-fn determine_max_numbers_count_test_diff_more_10() {
-    let max = 13.54543;
-    let min = 1.34;
-    let (s_max, kzc) = determine_max_numbers_count(max, min);
-    assert_eq!(s_max, 2);
-    assert_eq!(kzc, 0);
-}
-
-#[test]
-fn determine_max_numbers_count_test_diff_less_10() {
-    let max = 1.54543;
-    let min = 1.34;
-    let (s_max, kzc) = determine_max_numbers_count(max, min);
-    assert_eq!(s_max, 4);
-    assert_eq!(kzc, 2);
-}
-
-#[test]
-fn calculate_intervals_count_test_less_10() {
-    let available_width = 100;
-    let s_max = 5;
-    let k_i = calculate_intervals_count(available_width, s_max);
-    assert_eq!(k_i, 3);
-}
-
-#[test]
-fn calculate_intervals_count_test_more_10() {
-    let width = 1000;
-    let s_max = 5;
-    let k_i = calculate_intervals_count(width, s_max);
-    assert_eq!(k_i, 10);
-}
 
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axis;
     use test::Bencher;
+
+    #[test]
+    fn get_numbers_count_test() {
+        let val = 34234;
+        let c = axis::get_numbers_count(val);
+        assert_eq!(c, 5);
+    }
+
+    #[test]
+    fn determine_max_numbers_count_test_diff_more_10() {
+        let max = 13.54543;
+        let min = 1.34;
+        let (s_max, kzc) = axis::determine_max_numbers_count(max, min);
+        assert_eq!(s_max, 2);
+        assert_eq!(kzc, 0);
+    }
+
+    #[test]
+    fn determine_max_numbers_count_test_diff_less_10() {
+        let max = 1.54543;
+        let min = 1.34;
+        let (s_max, kzc) = axis::determine_max_numbers_count(max, min);
+        assert_eq!(s_max, 4);
+        assert_eq!(kzc, 2);
+    }
+
+    #[test]
+    fn calculate_intervals_count_test_less_10() {
+        let available_width = 100;
+        let s_max = 5;
+        let k_i = axis::calculate_intervals_count(available_width, s_max);
+        assert_eq!(k_i, 3);
+    }
+
+    #[test]
+    fn calculate_intervals_count_test_more_10() {
+        let width = 1000;
+        let s_max = 5;
+        let k_i = axis::calculate_intervals_count(width, s_max);
+        assert_eq!(k_i, 10);
+    }
+
 
     #[bench]
     fn create_axis_bench(b: &mut Bencher) {

@@ -9,22 +9,24 @@ use std::fs::File;
 fn main() {
     let mut chart = Chart::new(740, 480, "#000000", "#00ffff").unwrap();
 
-    let v: Vec<_> = formula!(y(x): f64 = {x*x}, x = [-150f64, 150f64; 1f64]).collect();
+    // let v: Vec<_> = formula!(y(x): f64 = {x*x}, x = [-150f64, 150f64; 1f64]).collect();
 
-    // let v = vec![(1f64, -74.756),
-    //              (2f64, -75.271),
-    //              (3f64, -75.674),
-    //              (4f64, -74.405),
-    //              (5f64, -74.809),
-    //              (6f64, -75.324),
-    //              (7f64, -75.727),
-    //              (8f64, -74.458),
-    //              (9f64, -74.862),
-    //              (10f64, -75.592)];
+    let v = vec![(1f64, -74.756),
+                 (2f64, -75.271),
+                 (3f64, -75.674),
+                 (4f64, -74.405),
+                 (5f64, -74.809),
+                 (6f64, -75.324),
+                 (7f64, -75.727),
+                 (8f64, -74.458),
+                 (9f64, -74.862),
+                 (10f64, -75.592)];
 
-    let serie = Serie::new(v.into_iter(), "#ff0000").unwrap();
+    let serie = Serie::new(v.into_iter(), "#ff0000".to_string()).unwrap();
 
-    let bmp = chart.create_bmp_vec(serie).unwrap();
+    chart.add_serie(serie);
+
+    let bmp = chart.draw_bmp();
 
     let mut file = File::create("graph.bmp").unwrap();
     file.write_all(&bmp).unwrap();
