@@ -9,8 +9,8 @@ use std::fs::File;
 fn main() {
     let mut chart = Chart::new(740, 480, "#000000", "#00ffff").unwrap();
 
-    let v1: Vec<_> = formula!(y(x): f64 = {x.sin()}, x = [-10f64, 10f64; 0.1f64]).collect();
-    let v2: Vec<_> = formula!(y(x): f64 = {x.cos()}, x = [-10f64, 10f64; 0.1f64]).collect();
+    let v1: Vec<_> = formula!(y(x) = x.sin(), x = [-10, 10; 0.1]).collect();
+    let v2: Vec<_> = formula!(y(x) = x.cos(), x = [-10, 10; 0.1]).collect();
 
     // let v2 = vec![(1f64, -74.756),
     //              (2f64, -75.271),

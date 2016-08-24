@@ -383,7 +383,7 @@ mod tests {
     #[bench]
     fn create_graph_1000_points(b: &mut Bencher) {
         b.iter(|| {
-            let p: Vec<_> = formula!(y(x): f64 = {x*x}, x = [0f64, 1000f64; 1f64]).collect();
+            let p: Vec<_> = formula!(y(x) = {x*x}, x = [0, 1000; 1]).collect();
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
             let mut chart = Chart::new(740, 480, "#ffffff", "#000000").unwrap();
             let series = vec![serie];
@@ -395,7 +395,7 @@ mod tests {
     #[ignore]
     fn create_graph_1000000_points(b: &mut Bencher) {
         b.iter(|| {
-            let p: Vec<_> = formula!(y(x): f64 = {x*x}, x = [0f64, 1000f64; 0.001f64]).collect();
+            let p: Vec<_> = formula!(y(x) = {x*x}, x = [0, 1000; 0.001]).collect();
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
             let mut chart = Chart::new(740, 480, "#ffffff", "#000000").unwrap();
             let series = vec![serie];
