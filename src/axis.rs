@@ -18,9 +18,9 @@ const DEFAULT_SIZE: usize = 100;
 pub struct Axis {
     pub min_value: f64,
     pub max_value: f64,
-    c: f64,
-    pub c_i: f64,
     pub k_i: u8,
+    pub c_i: f64,
+    c: f64,
     kzc: u8,
     size: usize,
     rotated: bool,
@@ -67,13 +67,14 @@ impl Axis {
         let (s_max, kzc) = determine_max_numbers_count(max, min);
         axis.kzc = kzc;
         axis.k_i = calculate_intervals_count(available_size, s_max);
+        axis.c_i = (available_size as f64) / (axis.k_i as f64);
+        axis.size = total_size;
+
         axis.min_value = calc(f64::floor, min, axis.kzc as i32);
         axis.max_value = calc(f64::ceil, max, axis.kzc as i32);
         let c = (axis.max_value - axis.min_value) / (axis.k_i as f64);
         axis.c = calc(f64::ceil, c, axis.kzc as i32);
         axis.max_value = axis.min_value + axis.c * (axis.k_i as f64);
-        axis.c_i = (available_size as f64) * axis.c / (axis.max_value - axis.min_value);
-        axis.size = total_size;
         axis
     }
 

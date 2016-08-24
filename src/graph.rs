@@ -32,6 +32,16 @@ quick_error! {
 pub type GraphResult = Result<Vec<u8>, GraphError>;
 
 
+pub trait InPoint: Into<Point> + PartialEq {}
+impl<T: Into<Point> + PartialEq> InPoint for T {}
+
+pub trait IterInPoint<P: InPoint>: Iterator<Item = P> + Clone {}
+impl<T, P> IterInPoint<P> for T
+    where T: Iterator<Item = P> + Clone,
+          P: InPoint
+{
+}
+
 #[derive(Clone, Copy)]
 pub struct Point {
     pub x: f64,
@@ -58,10 +68,7 @@ pub struct DisplayPoint {
 
 
 #[derive(Debug, Clone)]
-pub struct Serie<T, P>
-    where T: Iterator<Item = P> + Clone,
-          P: Into<Point> + PartialEq
-{
+pub struct Serie<T: IterInPoint<P, Item = P>, P: InPoint> {
     pub iter: T,
     color: String,
     max_x: f64,
@@ -70,10 +77,7 @@ pub struct Serie<T, P>
     min_y: f64,
 }
 
-impl<T, P> Serie<T, P>
-    where T: Iterator<Item = P> + Clone,
-          P: Into<Point> + PartialEq
-{
+impl<P: InPoint, T: IterInPoint<P>> Serie<T, P> {
     pub fn new(iter: T, color: String) -> Result<Self, GraphError> {
 
         if iter.clone().nth(1).is_none() {
@@ -122,10 +126,7 @@ impl<T, P> Serie<T, P>
 
 
 #[derive(Debug)]
-pub struct Chart<T, P>
-    where T: Iterator<Item = P> + Clone,
-          P: Into<Point> + PartialEq
-{
+pub struct Chart {
     width: usize,
     height: usize,
     background_color: u8,
@@ -134,13 +135,9 @@ pub struct Chart<T, P>
     picture: BitMap,
     axis_x: Option<Axis>,
     axis_y: Option<Axis>,
-    series: Vec<Serie<T, P>>,
 }
 
-impl<T, P> Chart<T, P>
-    where T: Iterator<Item = P> + Clone,
-          P: Into<Point> + PartialEq
-{
+impl Chart {
     pub fn new(width: usize,
                height: usize,
                background_color: &str,
@@ -171,13 +168,11 @@ impl<T, P> Chart<T, P>
             picture: picture,
             axis_x: None,
             axis_y: None,
-            series: vec![],
         })
     }
 
-    pub fn add_serie(&mut self, serie: Serie<T, P>) {
 
-        self.change_current_axis(&serie);
+    fn draw_serie<P: InPoint, T: IterInPoint<P>>(&mut self, serie: Serie<T, P>) {
 
         let func_points = {
 
@@ -190,33 +185,63 @@ impl<T, P> Chart<T, P>
         let points_color_number = self.picture.add_color(&*serie.color);
 
         self.draw_pixels(func_points, points_color_number);
-
-        self.series.push(serie);
-    }
-
-    pub fn draw_bmp(&mut self) -> Vec<u8> {
-
-        self.draw_axis();
-
-        self.picture.add_pixels(&self.pixs);
-
-        self.picture.to_vec()
     }
 
 
-    fn change_current_axis(&mut self, serie: &Serie<T, P>) {
+    fn calc_axis<S, T, P>(&mut self, series: S)
+        where S: Iterator<Item = Serie<T, P>>,
+              T: IterInPoint<P>,
+              P: InPoint
+    {
+        let (mut min_x, mut max_x) = (f64::INFINITY, f64::NEG_INFINITY);
+        let (mut min_y, mut max_y) = (f64::INFINITY, f64::NEG_INFINITY);
 
-        let axis_x = Axis::calculate_axis(serie.max_x, serie.min_x, self.width);
+        for s in series {
+            if s.max_x > max_x {
+                max_x = s.max_x;
+            }
+            if s.min_x < min_x {
+                min_x = s.min_x;
+            }
 
-        let axis_y = Axis::calculate_axis(serie.max_y, serie.min_y, self.height).rotate();
+            if s.max_y > max_y {
+                max_y = s.max_y;
+            }
+            if s.min_y < min_y {
+                min_y = s.min_y;
+            }
+        }
+
+        let axis_x = Axis::calculate_axis(max_x, min_x, self.width);
+
+        let axis_y = Axis::calculate_axis(max_y, min_y, self.height).rotate();
 
         self.axis_x = Some(axis_x);
 
         self.axis_y = Some(axis_y);
     }
 
+    pub fn draw<S, T, P>(&mut self, series: S) -> Vec<u8>
+        where S: Iterator<Item = Serie<T, P>> + Clone,
+              T: IterInPoint<P>,
+              P: InPoint
+    {
+
+        self.calc_axis(series.clone());
+
+        self.draw_axis();
+
+        for serie in series {
+            self.draw_serie(serie);
+        }
+
+        self.picture.add_pixels(&self.pixs);
+
+        self.picture.to_vec()
+    }
+
     fn draw_axis(&mut self) {
-        
+
         let axis_x = self.axis_x.clone().unwrap();
 
         let axis_y = self.axis_y.clone().unwrap();
@@ -254,9 +279,11 @@ impl<T, P> Chart<T, P>
         v
     }
 
-    fn serie_to_points<'b>(&'b mut self,
-                           serie: &'b Serie<T, P>)
-                           -> Box<Iterator<Item = DisplayPoint> + 'b> {
+    fn serie_to_points<'b, P: InPoint, T: IterInPoint<P>>
+        (&'b mut self,
+         serie: &'b Serie<T, P>)
+         -> Box<Iterator<Item = DisplayPoint> + 'b> {
+
         let width_available = self.width - LEFT_SHIFT - RIGHT_SHIFT;
 
         let height_available = self.height - LEFT_SHIFT - RIGHT_SHIFT;
@@ -272,18 +299,9 @@ impl<T, P> Chart<T, P>
 
         Box::new(serie_iter.map(move |p| {
             let p = p.into();
-            let mut id_x = ((p.x - axis_x.min_value) / resolution_x).round() as usize;
-            let mut id_y = ((p.y - axis_y.min_value) / resolution_y).round() as usize;
+            let id_x = ((p.x - axis_x.min_value) / resolution_x).round() as usize;
+            let id_y = ((p.y - axis_y.min_value) / resolution_y).round() as usize;
 
-            if id_x == self.width {
-                print!("gotta x");
-                id_x -= 1;
-
-            }
-            if id_y == self.height {
-                print!("gotta y");
-                id_y -= 1;
-            }
             DisplayPoint {
                 x: (id_x + LEFT_SHIFT),
                 y: (id_y + LEFT_SHIFT),
@@ -307,12 +325,10 @@ impl<T, P> Chart<T, P>
 mod tests {
     use super::*;
     use test::Bencher;
-    use std::vec::IntoIter;
 
     #[test]
     fn not_enough_space_test() {
-        let result: Result<Chart<IntoIter<(f64, f64)>, (f64, f64)>, GraphError> =
-            Chart::new(10, 15, "#ffffff", "#000000");
+        let result = Chart::new(10, 15, "#ffffff", "#000000");
         assert_eq!(result.unwrap_err().to_string(),
                    "There are not enough width and height to form graph with axis.");
     }
@@ -346,8 +362,8 @@ mod tests {
         let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
         let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
         let mut chart = Chart::new(100, 100, "#ffffff", "#000000").unwrap();
-        chart.add_serie(serie);
-        let bmp = chart.draw_bmp();
+        let series = vec![serie];
+        let bmp = chart.draw(series.into_iter());
         for p in bmp {
             println!("{}", p);
         }
@@ -359,8 +375,8 @@ mod tests {
             let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
             let mut chart = Chart::new(740, 480, "#ffffff", "#000000").unwrap();
-            chart.add_serie(serie);
-            let _ = chart.draw_bmp();
+            let series = vec![serie];
+            let _ = chart.draw(series.into_iter());
         })
     }
 
@@ -370,8 +386,8 @@ mod tests {
             let p: Vec<_> = formula!(y(x): f64 = {x*x}, x = [0f64, 1000f64; 1f64]).collect();
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
             let mut chart = Chart::new(740, 480, "#ffffff", "#000000").unwrap();
-            chart.add_serie(serie);
-            let _ = chart.draw_bmp();
+            let series = vec![serie];
+            let _ = chart.draw(series.into_iter());
         })
     }
 
@@ -382,8 +398,8 @@ mod tests {
             let p: Vec<_> = formula!(y(x): f64 = {x*x}, x = [0f64, 1000f64; 0.001f64]).collect();
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
             let mut chart = Chart::new(740, 480, "#ffffff", "#000000").unwrap();
-            chart.add_serie(serie);
-            let _ = chart.draw_bmp();
+            let series = vec![serie];
+            let _ = chart.draw(series.into_iter());
         })
     }
 }
