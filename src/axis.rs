@@ -73,13 +73,19 @@ impl Axis {
         axis.min_value = calc(f64::floor, min, axis.decimal_places as i32);
         axis.max_value = calc(f64::ceil, max, axis.decimal_places as i32);
         let scale_interval_value = (axis.max_value - axis.min_value) / (axis.interval_count as f64);
-        axis.scale_interval_value = calc(f64::ceil, scale_interval_value, axis.decimal_places as i32);
+        axis.scale_interval_value =
+            calc(f64::ceil, scale_interval_value, axis.decimal_places as i32);
         axis.max_value = axis.min_value + axis.scale_interval_value * (axis.interval_count as f64);
         axis
     }
 
 
-    pub fn set_axis_manual(min_value: f64, max_value: f64, interval_count: u8, decimal_places: u8, size: usize) -> Axis {
+    pub fn set_axis_manual(min_value: f64,
+                           max_value: f64,
+                           interval_count: u8,
+                           decimal_places: u8,
+                           size: usize)
+                           -> Axis {
         let available_size = size - 2 * W_BORDER - H_NUMBER - W_NUMBER - W_ARROW;
         let scale_interval_pix = (available_size as f64) / (interval_count as f64);
         let min = calc(f64::floor, min_value, decimal_places as i32);
@@ -115,7 +121,8 @@ impl Axis {
     fn create_ticks_points(&self) -> Vec<DisplayPoint> {
         let mut v: Vec<DisplayPoint> = vec![];
         for i in 0..self.interval_count {
-            let value = round((self.min_value + self.scale_interval_value * (i as f64)), self.decimal_places as i32);
+            let value = round((self.min_value + self.scale_interval_value * (i as f64)),
+                              self.decimal_places as i32);
             let value_s = &*value.to_string();
             let shift = (self.scale_interval_pix * (i as f64)).round() as usize;
             v.extend(tick::create_tick_with_label(START_SHIFT + shift, value_s, self.rotated));

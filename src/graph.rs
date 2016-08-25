@@ -138,7 +138,6 @@ pub struct Chart {
 }
 
 impl Chart {
-
     pub fn new(width: usize,
                height: usize,
                background_color: &str,
@@ -164,13 +163,22 @@ impl Chart {
 
 
         let new_axis_x = if let Some(x) = axis_x {
-            Some(Axis::set_axis_manual(x.min_value, x.max_value, x.interval_count,x.decimal_places, width))
+            Some(Axis::set_axis_manual(x.min_value,
+                                       x.max_value,
+                                       x.interval_count,
+                                       x.decimal_places,
+                                       width))
         } else {
             None
         };
 
         let new_axis_y = if let Some(y) = axis_y {
-            Some(Axis::set_axis_manual(y.min_value, y.max_value, y.interval_count,y.decimal_places, width).rotate())
+            Some(Axis::set_axis_manual(y.min_value,
+                                       y.max_value,
+                                       y.interval_count,
+                                       y.decimal_places,
+                                       width)
+                .rotate())
         } else {
             None
         };
@@ -192,9 +200,17 @@ impl Chart {
 
         let func_points = {
 
+            let max_width = self.width - RIGHT_SHIFT;
+
+            let max_height = self.height - RIGHT_SHIFT;
+
             let function = self.serie_to_points(&serie);
 
-            line::extrapolate(function).collect::<Vec<DisplayPoint>>()
+            line::extrapolate(function)
+                .filter(|p| {
+                    p.x > LEFT_SHIFT && p.x < max_width && p.y > LEFT_SHIFT && p.y < max_height
+                })
+                .collect::<Vec<DisplayPoint>>()
 
         };
 
@@ -245,7 +261,7 @@ impl Chart {
 
         if self.axis_x.is_none() || self.axis_y.is_none() {
             self.calc_axis(series.clone());
-        } 
+        }
 
         self.draw_axis();
 
@@ -317,8 +333,24 @@ impl Chart {
 
         Box::new(serie_iter.map(move |p| {
             let p = p.into();
-            let id_x = ((p.x - axis_x.min_value) / resolution_x).round() as usize;
-            let id_y = ((p.y - axis_y.min_value) / resolution_y).round() as usize;
+            let id_x = ((p.x - axis_x.min_value) / resolution_x).round();
+            let id_y = ((p.y - axis_y.min_value) / resolution_y).round();
+
+            let id_x = if id_x < 0f64 {
+                0 as usize
+            } else if id_x > (width_available as f64) {
+                width_available as usize
+            } else {
+                id_x as usize
+            };
+
+            let id_y = if id_y < 0f64 {
+                0 as usize
+            } else if id_y > (height_available as f64) {
+                height_available as usize
+            } else {
+                id_y as usize
+            };
 
             DisplayPoint {
                 x: (id_x + LEFT_SHIFT),
