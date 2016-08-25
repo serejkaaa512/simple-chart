@@ -4,7 +4,7 @@ use tick;
 
 const W_POINT: u8 = 1;      //value point separator width
 const W_BORDER: usize = 1;     //space around graph width
-const SPACE_BETWEEN_NUMBERS: usize = 1;     //space between numbers in pixels
+const W_DECIMAL_SEPARATOR: usize = 1;     //space between numbers in pixels
 const W_ARROW: usize = 4;      //width of arrow
 const W_NUMBER: usize = 4;     //number width in pixel
 const H_NUMBER: usize = 5;     //number height in pixels
@@ -18,10 +18,10 @@ const DEFAULT_SIZE: usize = 100;
 pub struct Axis {
     pub min_value: f64,
     pub max_value: f64,
-    pub k_i: u8,
-    pub c_i: f64,
-    c: f64,
-    kzc: u8,
+    pub interval_count: u8,
+    pub scale_interval_pix: f64,
+    scale_interval_value: f64,
+    pub decimal_places: u8,
     size: usize,
     rotated: bool,
 }
@@ -32,10 +32,10 @@ impl Axis {
         Axis {
             min_value: DEFAULT_MIN_VALUE,
             max_value: DEFAULT_MAX_VALUE,
-            c: 0f64,
-            c_i: 0f64,
-            k_i: 0u8,
-            kzc: 0u8,
+            scale_interval_value: 0f64,
+            scale_interval_pix: 0f64,
+            interval_count: 0u8,
+            decimal_places: 0u8,
             size: DEFAULT_SIZE,
             rotated: false,
         }
@@ -61,29 +61,63 @@ impl Axis {
         }
     }
 
-    pub fn calculate_axis(max: f64, min: f64, total_size: usize) -> Axis {
+    pub fn set_axis_auto(max: f64, min: f64, total_size: usize) -> Axis {
         let mut axis = Self::new();
         let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_NUMBER - W_ARROW;
-        let (s_max, kzc) = determine_max_numbers_count(max, min);
-        axis.kzc = kzc;
-        axis.k_i = calculate_intervals_count(available_size, s_max);
-        axis.c_i = (available_size as f64) / (axis.k_i as f64);
+        let (s_max, decimal_places) = determine_max_numbers_count(max, min);
+        axis.decimal_places = decimal_places;
+        axis.interval_count = calculate_intervals_count(available_size, s_max);
+        axis.scale_interval_pix = (available_size as f64) / (axis.interval_count as f64);
         axis.size = total_size;
 
-        axis.min_value = calc(f64::floor, min, axis.kzc as i32);
-        axis.max_value = calc(f64::ceil, max, axis.kzc as i32);
-        let c = (axis.max_value - axis.min_value) / (axis.k_i as f64);
-        axis.c = calc(f64::ceil, c, axis.kzc as i32);
-        axis.max_value = axis.min_value + axis.c * (axis.k_i as f64);
+        axis.min_value = calc(f64::floor, min, axis.decimal_places as i32);
+        axis.max_value = calc(f64::ceil, max, axis.decimal_places as i32);
+        let scale_interval_value = (axis.max_value - axis.min_value) / (axis.interval_count as f64);
+        axis.scale_interval_value = calc(f64::ceil, scale_interval_value, axis.decimal_places as i32);
+        axis.max_value = axis.min_value + axis.scale_interval_value * (axis.interval_count as f64);
         axis
+    }
+
+
+    pub fn set_axis_manual(min_value: f64, max_value: f64, interval_count: u8, decimal_places: u8, size: usize) -> Axis {
+        let available_size = size - 2 * W_BORDER - H_NUMBER - W_NUMBER - W_ARROW;
+        let scale_interval_pix = (available_size as f64) / (interval_count as f64);
+        let min = calc(f64::floor, min_value, decimal_places as i32);
+        let max = calc(f64::ceil, max_value, decimal_places as i32);
+        let mut scale_interval_value = (max - min) / (interval_count as f64);
+        scale_interval_value = calc(f64::ceil, scale_interval_value, decimal_places as i32);
+
+        Axis {
+            min_value: min,
+            max_value: max,
+            scale_interval_value: scale_interval_value,
+            scale_interval_pix: scale_interval_pix,
+            interval_count: interval_count,
+            decimal_places: decimal_places,
+            size: size,
+            rotated: false,
+        }
+    }
+
+    pub fn create(min_value: f64, max_value: f64, interval_count: u8, decimal_places: u8) -> Axis {
+        Axis {
+            min_value: min_value,
+            max_value: max_value,
+            scale_interval_value: 0f64,
+            scale_interval_pix: 0f64,
+            interval_count: interval_count,
+            decimal_places: decimal_places,
+            size: DEFAULT_SIZE,
+            rotated: false,
+        }
     }
 
     fn create_ticks_points(&self) -> Vec<DisplayPoint> {
         let mut v: Vec<DisplayPoint> = vec![];
-        for i in 0..self.k_i {
-            let value = round((self.min_value + self.c * (i as f64)), self.kzc as i32);
+        for i in 0..self.interval_count {
+            let value = round((self.min_value + self.scale_interval_value * (i as f64)), self.decimal_places as i32);
             let value_s = &*value.to_string();
-            let shift = (self.c_i * (i as f64)).round() as usize;
+            let shift = (self.scale_interval_pix * (i as f64)).round() as usize;
             v.extend(tick::create_tick_with_label(START_SHIFT + shift, value_s, self.rotated));
         }
         v
@@ -115,15 +149,15 @@ impl Axis {
 }
 
 
-fn round(value: f64, kzc: i32) -> f64 {
-    let k = 10f64.powi(kzc);
+fn round(value: f64, decimal_places: i32) -> f64 {
+    let k = 10f64.powi(decimal_places);
     (value * k).round() / k
 }
 
-fn calc<F>(f: F, value: f64, kzc: i32) -> f64
+fn calc<F>(f: F, value: f64, decimal_places: i32) -> f64
     where F: Fn(f64) -> f64
 {
-    let k = 10f64.powi(kzc);
+    let k = 10f64.powi(decimal_places);
     let new_value = f(value * k);
     new_value / k
 }
@@ -138,12 +172,12 @@ fn determine_max_numbers_count(max: f64, min: f64) -> (u8, u8) {
     if d > 10.0 {
         (maxc, 0)
     } else {
-        let mut kzc = 0;
+        let mut decimal_places = 0;
         while d < 10.0 {
             d *= 10.0;
-            kzc += 1;
+            decimal_places += 1;
         }
-        (maxc + W_POINT + kzc, kzc)
+        (maxc + W_POINT + decimal_places, decimal_places)
     }
 }
 
@@ -152,7 +186,7 @@ fn get_numbers_count(value: i64) -> u8 {
 }
 
 fn calculate_intervals_count(available_size: usize, s_max: u8) -> u8 {
-    let k = (available_size / ((W_NUMBER + SPACE_BETWEEN_NUMBERS) * (s_max as usize))) - 1;
+    let k = (available_size / ((W_NUMBER + W_DECIMAL_SEPARATOR) * (s_max as usize))) - 1;
     if k > MAX_INTERVALS as usize {
         MAX_INTERVALS
     } else {
@@ -181,41 +215,41 @@ mod tests {
     fn determine_max_numbers_count_test_diff_more_10() {
         let max = 13.54543;
         let min = 1.34;
-        let (s_max, kzc) = axis::determine_max_numbers_count(max, min);
+        let (s_max, decimal_places) = axis::determine_max_numbers_count(max, min);
         assert_eq!(s_max, 2);
-        assert_eq!(kzc, 0);
+        assert_eq!(decimal_places, 0);
     }
 
     #[test]
     fn determine_max_numbers_count_test_diff_less_10() {
         let max = 1.54543;
         let min = 1.34;
-        let (s_max, kzc) = axis::determine_max_numbers_count(max, min);
+        let (s_max, decimal_places) = axis::determine_max_numbers_count(max, min);
         assert_eq!(s_max, 4);
-        assert_eq!(kzc, 2);
+        assert_eq!(decimal_places, 2);
     }
 
     #[test]
     fn calculate_intervals_count_test_less_10() {
         let available_width = 100;
         let s_max = 5;
-        let k_i = axis::calculate_intervals_count(available_width, s_max);
-        assert_eq!(k_i, 3);
+        let interval_count = axis::calculate_intervals_count(available_width, s_max);
+        assert_eq!(interval_count, 3);
     }
 
     #[test]
     fn calculate_intervals_count_test_more_10() {
         let width = 1000;
         let s_max = 5;
-        let k_i = axis::calculate_intervals_count(width, s_max);
-        assert_eq!(k_i, 10);
+        let interval_count = axis::calculate_intervals_count(width, s_max);
+        assert_eq!(interval_count, 10);
     }
 
 
     #[bench]
     fn create_axis_bench(b: &mut Bencher) {
         b.iter(|| {
-            let axis = Axis::calculate_axis(100.0, 0.0, 1000);
+            let axis = Axis::set_axis_auto(100.0, 0.0, 1000);
             let _ = axis.create_points();
         })
     }
