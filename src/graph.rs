@@ -177,7 +177,7 @@ impl Chart {
                                        y.max_value,
                                        y.interval_count,
                                        y.decimal_places,
-                                       width)
+                                       height)
                 .rotate())
         } else {
             None
