@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate simple_graph;
-use simple_graph::Chart;
-use simple_graph::Serie;
-use simple_graph::Axis;
+use simple_graph::{Chart, Serie, Axis};
 use std::io::prelude::*;
 use std::fs::File;
 
