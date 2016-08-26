@@ -2,6 +2,8 @@
 This repository contains stuff to represent iterator of (T, T), that is
 convertable to (f64,f64), as line chart in bmp format.
 
+[![Build Status](https://travis-ci.org/serejkaaa512/Simple_Graph.svg?branch=master)](https://travis-ci.org/serejkaaa512/Simple_Graph)
+
 ## Example 1. One serie and auto calculated axis: 
 
 ```rust
