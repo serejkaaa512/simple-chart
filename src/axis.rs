@@ -10,8 +10,6 @@ const W_NUMBER: usize = 4;     //number width in pixel
 const H_NUMBER: usize = 5;     //number height in pixels
 const MAX_INTERVALS: u8 = 10;   // maximum intervals count
 const START_SHIFT: usize = W_BORDER + H_NUMBER + W_NUMBER;
-const DEFAULT_MIN_VALUE: f64 = 0f64;
-const DEFAULT_MAX_VALUE: f64 = 1f64;
 const DEFAULT_SIZE: usize = 100;
 
 #[derive(Debug, Clone)]
@@ -28,18 +26,7 @@ pub struct Axis {
 
 
 impl Axis {
-    pub fn new() -> Self {
-        Axis {
-            min_value: DEFAULT_MIN_VALUE,
-            max_value: DEFAULT_MAX_VALUE,
-            scale_interval_value: 0f64,
-            scale_interval_pix: 0f64,
-            interval_count: 0u8,
-            decimal_places: 0u8,
-            size: DEFAULT_SIZE,
-            rotated: false,
-        }
-    }
+    
     pub fn rotate(self) -> Self {
         Axis { rotated: true, ..self }
     }
@@ -62,21 +49,26 @@ impl Axis {
     }
 
     pub fn set_axis_auto(max: f64, min: f64, total_size: usize) -> Axis {
-        let mut axis = Self::new();
         let available_size = total_size - 2 * W_BORDER - H_NUMBER - W_NUMBER - W_ARROW;
         let (s_max, decimal_places) = determine_max_numbers_count(max, min);
-        axis.decimal_places = decimal_places;
-        axis.interval_count = calculate_intervals_count(available_size, s_max);
-        axis.scale_interval_pix = (available_size as f64) / (axis.interval_count as f64);
-        axis.size = total_size;
+        let interval_count = calculate_intervals_count(available_size, s_max);
+        let scale_interval_pix = (available_size as f64) / (interval_count as f64);
+        let min_value = calc(f64::floor, min, decimal_places as i32);
+        let max_value = calc(f64::ceil, max, decimal_places as i32);
+        let scale_interval_value = (max_value - min_value) / (interval_count as f64);
+        let scale_interval_value =
+            calc(f64::ceil, scale_interval_value, decimal_places as i32);
 
-        axis.min_value = calc(f64::floor, min, axis.decimal_places as i32);
-        axis.max_value = calc(f64::ceil, max, axis.decimal_places as i32);
-        let scale_interval_value = (axis.max_value - axis.min_value) / (axis.interval_count as f64);
-        axis.scale_interval_value =
-            calc(f64::ceil, scale_interval_value, axis.decimal_places as i32);
-        axis.max_value = axis.min_value + axis.scale_interval_value * (axis.interval_count as f64);
-        axis
+        Axis {
+            min_value: min_value,
+            max_value: max_value,
+            scale_interval_value: scale_interval_value,
+            scale_interval_pix: scale_interval_pix,
+            interval_count: interval_count,
+            decimal_places: decimal_places,
+            size: total_size,
+            rotated: false,
+        }
     }
 
 

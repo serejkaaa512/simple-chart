@@ -15,7 +15,7 @@ fn main() {
     let series = vec![serie1, serie2];
     let axis_x = Some(Axis::create(-2.0, 2.0, 7, 2));
     let axis_y = Some(Axis::create(-2.0, 2.0, 7, 2));
-    let mut chart = Chart::new(1024, 768, "#000000", "#ffffff", axis_x, axis_y).unwrap();
+    let mut chart = Chart::new(740, 480, "#000000", "#ffffff", axis_x, axis_y).unwrap();
     let bmp = chart.draw(series.into_iter());
     let mut file = File::create("graph.bmp").unwrap();
     file.write_all(&bmp).unwrap();
