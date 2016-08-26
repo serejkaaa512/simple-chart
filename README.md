@@ -13,7 +13,7 @@ Example 1. One serie and auto calculated axis:
     let mut file = File::create("graph_example_1.bmp").unwrap();
     file.write_all(&bmp).unwrap();
 ```
-![alt](https://serejkaaa512.github.io/simple_graph/graph_example_1.bmp)
+![alt](http://serejkaaa512.github.io/Simple_Graph/graph_example_1.bmp)
 
 Example 2. One serie, calculated from included macros formula!, 
 and manual setted axis x:
@@ -29,7 +29,7 @@ and manual setted axis x:
     file.write_all(&bmp).unwrap();
 ```
 
-![alt](https://serejkaaa512.github.io/simple_graph/graph_example_2.bmp)
+![alt](http://serejkaaa512.github.io/Simple_Graph/graph_example_2.bmp)
 
 Example 3. Two series and manual setted axis x and y:
 
@@ -47,6 +47,6 @@ Example 3. Two series and manual setted axis x and y:
     file.write_all(&bmp).unwrap();
 ```
 
-![alt](https://serejkaaa512.github.io/simple_graph/graph_example_3.bmp)
+![alt](http://serejkaaa512.github.io/Simple_Graph/graph_example_3.bmp)
 
 
