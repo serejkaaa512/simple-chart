@@ -208,7 +208,7 @@ impl Chart {
 
             line::extrapolate(function)
                 .filter(|p| {
-                    p.x > LEFT_SHIFT && p.x < max_width && p.y > LEFT_SHIFT && p.y < max_height
+                    p.x >= LEFT_SHIFT && p.x <= max_width && p.y >= LEFT_SHIFT && p.y <= max_height
                 })
                 .collect::<Vec<DisplayPoint>>()
 
@@ -337,24 +337,24 @@ impl Chart {
             let id_y = ((p.y - axis_y.min_value) / resolution_y).round();
 
             let id_x = if id_x < 0f64 {
-                0 as usize
+                LEFT_SHIFT - 1
             } else if id_x > (width_available as f64) {
-                width_available as usize
+                width_available + LEFT_SHIFT + 1
             } else {
-                id_x as usize
+                (id_x as usize) + LEFT_SHIFT
             };
 
             let id_y = if id_y < 0f64 {
-                0 as usize
+                LEFT_SHIFT - 1
             } else if id_y > (height_available as f64) {
-                height_available as usize
+                height_available + LEFT_SHIFT + 1
             } else {
-                id_y as usize
+                (id_y as usize) + LEFT_SHIFT
             };
 
             DisplayPoint {
-                x: (id_x + LEFT_SHIFT),
-                y: (id_y + LEFT_SHIFT),
+                x: id_x,
+                y: id_y,
             }
         }))
 
