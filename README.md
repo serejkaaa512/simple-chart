@@ -4,7 +4,7 @@ convertable to (f64,f64), as line chart in bmp format.
 
 [![Build Status](https://travis-ci.org/serejkaaa512/Simple_Graph.svg?branch=master)](https://travis-ci.org/serejkaaa512/Simple_Graph)
 
-## Example 1. One serie and auto calculated axis returned as Vec<u8>: 
+## Example 1. One serie and auto calculated axis returned as `Vec<u8>`: 
 
 ```rust
     let v1: Vec<_> = vec![(1.2,2.3), (3.4, 4.5), (5.6, 6.7)];
