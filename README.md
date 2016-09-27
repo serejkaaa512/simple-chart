@@ -1,8 +1,8 @@
-# Simple Graph
+# Simple Chart
 This repository contains stuff to represent iterator of (T, T), that is
 convertable to (f64,f64), as line chart in bmp format.
 
-[![Build Status](https://travis-ci.org/serejkaaa512/Simple_Graph.svg?branch=master)](https://travis-ci.org/serejkaaa512/Simple_Graph)
+[![Build Status](https://travis-ci.org/serejkaaa512/simple-chart.svg?branch=master)](https://travis-ci.org/serejkaaa512/simple-chart)
 
 ## Example 1. One serie and auto calculated axis returned as `Vec<u8>`: 
 
@@ -16,7 +16,7 @@ convertable to (f64,f64), as line chart in bmp format.
     
     let bmp = chart.draw(series.into_iter());
 ```
-![alt](http://serejkaaa512.github.io/Simple_Graph/graph_example_1.bmp)
+![chart1](http://serejkaaa512.github.io/simple-chart/graph_example_1.bmp)
 
 ## Example 2. One serie, calculated from included macros formula!, 
 and manual setted axis x:
@@ -33,7 +33,7 @@ and manual setted axis x:
     let bmp = chart.draw(series.into_iter());
 ```
 
-![alt](http://serejkaaa512.github.io/Simple_Graph/graph_example_2.bmp)
+![chart2](http://serejkaaa512.github.io/simple-chart/graph_example_2.bmp)
 
 ## Example 3. Two series and manual setted axis x and y:
 
@@ -52,7 +52,7 @@ and manual setted axis x:
     let bmp = chart.draw(series.into_iter());
 ```
 
-![alt](http://serejkaaa512.github.io/Simple_Graph/graph_example_3.bmp)
+![chart3](http://serejkaaa512.github.io/simple-chart/graph_example_3.bmp)
 
 ## Usage
 
@@ -60,19 +60,19 @@ Put this in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-simple_graph = "*"
+simple-chart = "*"
 ```
 
 And this in your crate root:
 
 ```rust
-extern crate simple_graph;
-use simple_graph::{Chart, Serie, Axis};
+extern crate simple_chart;
+use simple_chart::{Chart, Serie, Axis};
 ```
 
 ## Resources
 
-- [Full `simple_graph` documentation](http://serejkaaa512.github.io/Simple_Graph)
+- [Full `simple-chart` documentation](http://serejkaaa512.github.io/simple-chart)
 
 ## License
 
