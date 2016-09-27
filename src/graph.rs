@@ -78,7 +78,9 @@ pub struct Serie<T: IterInPoint<P, Item = P>, P: InPoint> {
 }
 
 impl<P: InPoint, T: IterInPoint<P>> Serie<T, P> {
-    pub fn new(iter: T, color: String) -> Result<Self, GraphError> {
+    pub fn new<S: Into<String>>(iter: T, color: S) -> Result<Self, GraphError> {
+
+        let color = color.into();
 
         if iter.clone().nth(1).is_none() {
             return Err(GraphError::NotEnoughPoints);

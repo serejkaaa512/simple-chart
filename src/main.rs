@@ -8,8 +8,8 @@ use std::fs::File;
 fn main() {
     let v1: Vec<_> = formula!(y(x) = x.sin(), x = [-3.14, 3.14; 0.1]).collect();
     let v2: Vec<_> = formula!(y(x) = x.cos(), x = [-3.14, 3.14; 0.1]).collect();
-    let serie1 = Serie::new(v1.into_iter(), "#ff0000".to_string()).unwrap();
-    let serie2 = Serie::new(v2.into_iter(), "#00ff00".to_string()).unwrap();
+    let serie1 = Serie::new(v1.into_iter(), "#ff0000").unwrap();
+    let serie2 = Serie::new(v2.into_iter(), "#00ff00").unwrap();
     let series = vec![serie1, serie2];
     let axis_x = Some(Axis::create(-2.0, 2.0, 7, 2));
     let axis_y = Some(Axis::create(-2.0, 2.0, 7, 2));
