@@ -7,10 +7,13 @@ convertable to (f64,f64), as line chart in bmp format.
 ## Example 1. One serie and auto calculated axis returned as `Vec<u8>`: 
 
 ```rust
-    let v1: Vec<_> = vec![(1.2,2.3), (3.4, 4.5), (5.6, 6.7)];
-    let serie1 = Serie::new(v1.into_iter(), "#ff0000".to_string()).unwrap();
-    let series = vec![serie1];
-    let mut chart = Chart::new(200, 100, "#ffffff", "#000000", None, None).unwrap();
+    let mut chart = Chart::new(200, 100, "#ffffff", "#000000")
+        .unwrap();
+
+    let v: Vec<_> = vec![(1.2,2.3), (3.4, 4.5), (5.6, 6.7)];
+    let serie = Serie::new(v.into_iter(), "#ff0000").unwrap();
+    let series = vec![serie];
+    
     let bmp = chart.draw(series.into_iter());
 ```
 ![alt](http://serejkaaa512.github.io/Simple_Graph/graph_example_1.bmp)
@@ -19,11 +22,14 @@ convertable to (f64,f64), as line chart in bmp format.
 and manual setted axis x:
 
 ```rust
-    let v1: Vec<_> = formula!(y(x) = x.sin(), x = [-3.14, 3.14; 0.1]).collect();
-    let serie1 = Serie::new(v1.into_iter(), "#ffff00".to_string()).unwrap();
-    let series = vec![serie1];
-    let axis_x = Some(Axis::create(-2.0, 2.0, 7, 2));
-    let mut chart = Chart::new(400, 500, "#f14500", "#0027ff", axis_x, None).unwrap();
+    let mut chart = Chart::new(400, 500, "#f14500", "#0027ff")
+        .unwrap()
+        .add_axis_x(Axis::new(-2.0, 2.0, 7, 2));
+
+    let v: Vec<_> = formula!(y(x) = x.sin(), x = [-3.14, 3.14; 0.1]).collect();
+    let serie = Serie::new(v.into_iter(), "#ffff00").unwrap();
+    let series = vec![serie];
+
     let bmp = chart.draw(series.into_iter());
 ```
 
@@ -32,14 +38,17 @@ and manual setted axis x:
 ## Example 3. Two series and manual setted axis x and y:
 
 ```rust
+    let mut chart = Chart::new(740, 480, "#000000", "#ffffff")
+        .unwrap()
+        .add_axis_x(Axis::new(-2.0, 2.0, 7, 2))
+        .add_axis_y(Axis::new(-2.0, 2.0, 7, 2));
+
     let v1: Vec<_> = formula!(y(x) = x.sin(), x = [-3.14, 3.14; 0.1]).collect();
+    let serie1 = Serie::new(v1.into_iter(), "#ff0000").unwrap();
     let v2: Vec<_> = formula!(y(x) = x.cos(), x = [-3.14, 3.14; 0.1]).collect();
-    let serie1 = Serie::new(v1.into_iter(), "#ff0000".to_string()).unwrap();
-    let serie2 = Serie::new(v2.into_iter(), "#00ff00".to_string()).unwrap();
+    let serie2 = Serie::new(v2.into_iter(), "#00ff00").unwrap();
     let series = vec![serie1, serie2];
-    let axis_x = Some(Axis::create(-2.0, 2.0, 7, 2));
-    let axis_y = Some(Axis::create(-2.0, 2.0, 7, 2));
-    let mut chart = Chart::new(740, 480, "#000000", "#ffffff", axis_x, axis_y).unwrap();
+
     let bmp = chart.draw(series.into_iter());
 ```
 

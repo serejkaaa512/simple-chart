@@ -26,7 +26,6 @@ pub struct Axis {
 
 
 impl Axis {
-    
     pub fn rotate(self) -> Self {
         Axis { rotated: true, ..self }
     }
@@ -56,8 +55,7 @@ impl Axis {
         let min_value = calc(f64::floor, min, decimal_places as i32);
         let max_value = calc(f64::ceil, max, decimal_places as i32);
         let scale_interval_value = (max_value - min_value) / (interval_count as f64);
-        let scale_interval_value =
-            calc(f64::ceil, scale_interval_value, decimal_places as i32);
+        let scale_interval_value = calc(f64::ceil, scale_interval_value, decimal_places as i32);
 
         Axis {
             min_value: min_value,
@@ -97,7 +95,7 @@ impl Axis {
         }
     }
 
-    pub fn create(min_value: f64, max_value: f64, interval_count: u8, decimal_places: u8) -> Axis {
+    pub fn new(min_value: f64, max_value: f64, interval_count: u8, decimal_places: u8) -> Axis {
         Axis {
             min_value: min_value,
             max_value: max_value,

@@ -143,9 +143,7 @@ impl Chart {
     pub fn new(width: usize,
                height: usize,
                background_color: &str,
-               axis_color: &str,
-               axis_x: Option<Axis>,
-               axis_y: Option<Axis>)
+               axis_color: &str)
                -> Result<Self, GraphError> {
 
         if width < (2 * H_NUMBER + 2 * W_NUMBER + W_ARROW + 2 * W_BORDER) ||
@@ -163,28 +161,6 @@ impl Chart {
 
         let pixs = vec![background_color_number;  size];
 
-
-        let new_axis_x = if let Some(x) = axis_x {
-            Some(Axis::set_axis_manual(x.min_value,
-                                       x.max_value,
-                                       x.interval_count,
-                                       x.decimal_places,
-                                       width))
-        } else {
-            None
-        };
-
-        let new_axis_y = if let Some(y) = axis_y {
-            Some(Axis::set_axis_manual(y.min_value,
-                                       y.max_value,
-                                       y.interval_count,
-                                       y.decimal_places,
-                                       height)
-                .rotate())
-        } else {
-            None
-        };
-
         Ok(Chart {
             width: width,
             height: height,
@@ -192,11 +168,30 @@ impl Chart {
             axis_color: axis_color_number,
             pixs: pixs,
             picture: picture,
-            axis_x: new_axis_x,
-            axis_y: new_axis_y,
+            axis_x: None,
+            axis_y: None,
         })
     }
 
+    pub fn add_axis_x(self, axis_x: Axis) -> Chart {
+        let new_axis_x = Some(Axis::set_axis_manual(axis_x.min_value,
+                                                    axis_x.max_value,
+                                                    axis_x.interval_count,
+                                                    axis_x.decimal_places,
+                                                    self.width));
+        Chart { axis_x: new_axis_x, ..self }
+    }
+
+
+    pub fn add_axis_y(self, axis_y: Axis) -> Chart {
+        let new_axis_y = Some(Axis::set_axis_manual(axis_y.min_value,
+                                                    axis_y.max_value,
+                                                    axis_y.interval_count,
+                                                    axis_y.decimal_places,
+                                                    self.height)
+            .rotate());
+        Chart { axis_y: new_axis_y, ..self }
+    }
 
     fn draw_serie<P: InPoint, T: IterInPoint<P>>(&mut self, serie: Serie<T, P>) {
 
@@ -354,10 +349,7 @@ impl Chart {
                 (id_y as usize) + LEFT_SHIFT
             };
 
-            DisplayPoint {
-                x: id_x,
-                y: id_y,
-            }
+            DisplayPoint { x: id_x, y: id_y }
         }))
 
     }
@@ -381,7 +373,7 @@ mod tests {
 
     #[test]
     fn not_enough_space_test() {
-        let result = Chart::new(10, 15, "#ffffff", "#000000", None, None);
+        let result = Chart::new(10, 15, "#ffffff", "#000000");
         assert_eq!(result.unwrap_err().to_string(),
                    "There are not enough width and height to form graph with axis.");
     }
@@ -414,7 +406,7 @@ mod tests {
     fn can_draw_array() {
         let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
         let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
-        let mut chart = Chart::new(100, 100, "#ffffff", "#000000", None, None).unwrap();
+        let mut chart = Chart::new(100, 100, "#ffffff", "#000000").unwrap();
         let series = vec![serie];
         let bmp = chart.draw(series.into_iter());
         for p in bmp {
@@ -426,8 +418,10 @@ mod tests {
     fn can_draw_axis_manual() {
         let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
         let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
-        let axis_x = Some(Axis::create(0f64, 2f64, 7, 2));
-        let mut chart = Chart::new(100, 100, "#ffffff", "#000000", axis_x, None).unwrap();
+        let axis_x = Axis::new(0f64, 2f64, 7, 2);
+        let mut chart = Chart::new(100, 100, "#ffffff", "#000000")
+            .unwrap()
+            .add_axis_x(axis_x);
         let series = vec![serie];
         let _ = chart.draw(series.into_iter());
     }
@@ -437,7 +431,7 @@ mod tests {
         b.iter(|| {
             let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
-            let mut chart = Chart::new(740, 480, "#ffffff", "#000000", None, None).unwrap();
+            let mut chart = Chart::new(740, 480, "#ffffff", "#000000").unwrap();
             let series = vec![serie];
             let _ = chart.draw(series.into_iter());
         })
@@ -448,7 +442,7 @@ mod tests {
         b.iter(|| {
             let p: Vec<_> = formula!(y(x) = {x*x}, x = [0, 1000; 1]).collect();
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
-            let mut chart = Chart::new(740, 480, "#ffffff", "#000000", None, None).unwrap();
+            let mut chart = Chart::new(740, 480, "#ffffff", "#000000").unwrap();
             let series = vec![serie];
             let _ = chart.draw(series.into_iter());
         })
@@ -460,7 +454,7 @@ mod tests {
         b.iter(|| {
             let p: Vec<_> = formula!(y(x) = {x*x}, x = [0, 1000; 0.001]).collect();
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
-            let mut chart = Chart::new(740, 480, "#ffffff", "#000000", None, None).unwrap();
+            let mut chart = Chart::new(740, 480, "#ffffff", "#000000").unwrap();
             let series = vec![serie];
             let _ = chart.draw(series.into_iter());
         })
