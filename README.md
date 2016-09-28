@@ -16,7 +16,7 @@ convertable to (f64,f64), as line chart in bmp format.
     
     let bmp = chart.draw(series.into_iter());
 ```
-![chart1](http://serejkaaa512.github.io/simple-chart/graph_example_1.bmp)
+![chart1](https://github.com/serejkaaa512/simple-chart/graph_example_1.bmp)
 
 ## Example 2. One serie, calculated from included macros formula!, 
 and manual setted axis x:
@@ -33,7 +33,7 @@ and manual setted axis x:
     let bmp = chart.draw(series.into_iter());
 ```
 
-![chart2](http://serejkaaa512.github.io/simple-chart/graph_example_2.bmp)
+![chart2](https://github.com/serejkaaa512/simple-chart/graph_example_2.bmp)
 
 ## Example 3. Two series and manual setted axis x and y:
 
@@ -52,7 +52,7 @@ and manual setted axis x:
     let bmp = chart.draw(series.into_iter());
 ```
 
-![chart3](http://serejkaaa512.github.io/simple-chart/graph_example_3.bmp)
+![chart3](https://github.com/serejkaaa512/simple-chart/graph_example_3.bmp)
 
 ## Usage
 
