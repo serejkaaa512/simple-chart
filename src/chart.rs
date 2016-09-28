@@ -373,7 +373,7 @@ mod tests {
     #[test]
     fn not_enough_space_test() {
         let result = Chart::new(10, 15, "#ffffff", "#000000");
-        assert_eq!(result.unwrap_err().to_string(),
+        assert_eq!(result.err().unwrap().to_string(),
                    "There are not enough width and height to form graph with axis.");
     }
 
@@ -381,7 +381,7 @@ mod tests {
     fn not_enough_points_test() {
         let v: Vec<(f64, f64)> = vec![];
         let result = Serie::new(v.into_iter(), "#0000ff".to_string());
-        assert_eq!(result.unwrap_err().to_string(),
+        assert_eq!(result.err().unwrap().to_string(),
                    "There are not enough points to display on graph.");
     }
 
@@ -389,7 +389,7 @@ mod tests {
     fn one_point_test() {
         let p = vec![(1f64, 1f64)];
         let result = Serie::new(p.into_iter(), "#0000ff".to_string());
-        assert_eq!(result.unwrap_err().to_string(),
+        assert_eq!(result.err().unwrap().to_string(),
                    "There are not enough points to display on graph.");
     }
 
@@ -397,7 +397,7 @@ mod tests {
     fn two_identical_point_test() {
         let p = vec![(1f64, 1f64), (1f64, 1f64)];
         let result = Serie::new(p.into_iter(), "#0000ff".to_string());
-        assert_eq!(result.unwrap_err().to_string(),
+        assert_eq!(result.err().unwrap().to_string(),
                    "There are only one unique point. Can't construct line.");
     }
 
