@@ -67,7 +67,7 @@ And this in your crate root:
 
 ```rust
 extern crate simple_chart;
-use simple_chart::{Chart, Serie, Axis};
+use simple_chart::{Chart, Serie, Axis, Point};
 ```
 
 ## Resources

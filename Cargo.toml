@@ -1,6 +1,6 @@
 [package]
 name = "simple-chart"
-version = "0.7.7"
+version = "0.7.8"
 authors = ["serejkaaa512 <5125402@mail.ru>"]
 repository = "https://github.com/serejkaaa512/simple-chart.git"
 homepage = "https://github.com/serejkaaa512/simple-chart.git"

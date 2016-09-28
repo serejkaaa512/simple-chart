@@ -18,6 +18,7 @@ mod tick;
 pub use self::bitmap::BitMap;
 pub use self::bitmap::Color;
 pub use self::chart::DisplayPoint;
+pub use self::chart::Point;
 pub use self::chart::Chart;
 pub use self::chart::Serie;
 pub use self::axis::Axis;
