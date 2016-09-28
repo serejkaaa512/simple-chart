@@ -48,7 +48,7 @@ impl BitMap {
         (self.info.clr_used - 1) as u8
     }
 
-    pub fn to_vec(&mut self) -> Vec<u8> {
+    pub fn as_vec(&mut self) -> Vec<u8> {
         let mut bitmap = vec![]; // V5
 
         let pixels_data_offset = HEADER_LENGHT + INFO_LENGHT + self.color_table.get_size();

@@ -193,13 +193,9 @@ fn calculate_intervals_count(available_size: usize, s_max: u8) -> u8 {
 }
 
 
-
-
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axis;
-    use test::Bencher;
 
     #[test]
     fn get_numbers_count_test() {
@@ -241,10 +237,15 @@ mod tests {
         let interval_count = axis::calculate_intervals_count(width, s_max);
         assert_eq!(interval_count, 10);
     }
+}
 
+#[cfg(all(feature = "dev", test))]
+mod bench {
+    extern crate test;
+    use super::*;
 
     #[bench]
-    fn create_axis_bench(b: &mut Bencher) {
+    fn create_axis_bench(b: &mut test::Bencher) {
         b.iter(|| {
             let axis = Axis::set_axis_auto(100.0, 0.0, 1000);
             let _ = axis.create_points();

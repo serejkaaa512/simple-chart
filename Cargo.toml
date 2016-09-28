@@ -10,3 +10,8 @@ doc = false
 [dependencies]
 byteorder = "0.5.1"
 quick-error = "1.1.0"
+clippy = {version = "*", optional = true}
+
+[features]
+default = []
+dev = ["clippy"]

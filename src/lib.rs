@@ -1,5 +1,7 @@
-#![feature(test)]
-extern crate test;
+#![cfg_attr(feature = "dev", allow(unstable_features, unused_features))]
+#![cfg_attr(feature = "dev", feature(plugin, test))]
+#![cfg_attr(feature = "dev", plugin(clippy))]
+
 extern crate byteorder;
 #[macro_use]
 extern crate quick_error;

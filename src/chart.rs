@@ -268,7 +268,7 @@ impl Chart {
 
         self.picture.add_pixels(&self.pixs);
 
-        self.picture.to_vec()
+        self.picture.as_vec()
     }
 
     fn draw_axis(&mut self) {
@@ -368,7 +368,6 @@ impl Chart {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
     use Axis;
 
     #[test]
@@ -425,9 +424,15 @@ mod tests {
         let series = vec![serie];
         let _ = chart.draw(series.into_iter());
     }
+}
+
+#[cfg(all(feature = "dev", test))]
+mod bench {
+    extern crate test;
+    use super::*;
 
     #[bench]
-    fn create_graph_2_points(b: &mut Bencher) {
+    fn create_graph_2_points(b: &mut test::Bencher) {
         b.iter(|| {
             let p = vec![(1f64, 1f64), (2f64, 2f64), (3f64, 3f64)];
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
@@ -438,7 +443,7 @@ mod tests {
     }
 
     #[bench]
-    fn create_graph_1000_points(b: &mut Bencher) {
+    fn create_graph_1000_points(b: &mut test::Bencher) {
         b.iter(|| {
             let p: Vec<_> = formula!(y(x) = {x*x}, x = [0, 1000; 1]).collect();
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
@@ -450,7 +455,7 @@ mod tests {
 
     #[bench]
     #[ignore]
-    fn create_graph_1000000_points(b: &mut Bencher) {
+    fn create_graph_1000000_points(b: &mut test::Bencher) {
         b.iter(|| {
             let p: Vec<_> = formula!(y(x) = {x*x}, x = [0, 1000; 0.001]).collect();
             let serie = Serie::new(p.into_iter(), "#0000ff".to_string()).unwrap();
