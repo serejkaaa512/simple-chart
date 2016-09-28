@@ -1,7 +1,13 @@
 [package]
 name = "simple-chart"
-version = "0.7.6"
+version = "0.7.7"
 authors = ["serejkaaa512 <5125402@mail.ru>"]
+repository = "https://github.com/serejkaaa512/simple-chart.git"
+homepage = "https://github.com/serejkaaa512/simple-chart.git"
+license = "MIT"
+readme = "README.md"
+documentation = "http://serejkaaa512.github.io/simple-chart/"
+description = "Simple line chart in bmp format."
 
 [[bin]]
 name = "main"
