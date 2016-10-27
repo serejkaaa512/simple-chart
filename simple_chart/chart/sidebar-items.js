@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["GraphError",""]],"struct":[["Chart",""],["DisplayPoint",""],["Point",""],["Serie",""]],"trait":[["InPoint",""],["IterInPoint",""]],"type":[["GraphResult",""]]});
