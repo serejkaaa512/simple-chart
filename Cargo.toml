@@ -16,7 +16,7 @@ doc = false
 [dependencies]
 byteorder = "0.5.1"
 quick-error = "1.1.0"
-clippy = {version = "0.0.90", optional = true}
+clippy = {version = "0.0.96", optional = true}
 
 [features]
 default = []

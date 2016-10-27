@@ -22,3 +22,4 @@ pub use self::chart::Point;
 pub use self::chart::Chart;
 pub use self::chart::Serie;
 pub use self::axis::Axis;
+pub use self::macros::Formula;
