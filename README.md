@@ -26,7 +26,7 @@ and manual setted axis x:
         .unwrap()
         .add_axis_x(Axis::new(-2.0, 2.0, 7, 2));
 
-    let v: Vec<_> = formula!(y(x) = x.sin(), x = [-3.14, 3.14; 0.1]).collect();
+    let v = formula!(y(x) = x.sin(), x = [-3.14, 3.14; 0.1]);
     let serie = Serie::new(v.into_iter(), "#ffff00").unwrap();
     let series = vec![serie];
 
@@ -43,9 +43,9 @@ and manual setted axis x:
         .add_axis_x(Axis::new(-2.0, 2.0, 7, 2))
         .add_axis_y(Axis::new(-2.0, 2.0, 7, 2));
 
-    let v1: Vec<_> = formula!(y(x) = x.sin(), x = [-3.14, 3.14; 0.1]).collect();
+    let v1 = formula!(y(x) = x.sin(), x = [-3.14, 3.14; 0.1]);
+    let v2 = formula!(y(x) = x.cos(), x = [-3.14, 3.14; 0.1]);
     let serie1 = Serie::new(v1.into_iter(), "#ff0000").unwrap();
-    let v2: Vec<_> = formula!(y(x) = x.cos(), x = [-3.14, 3.14; 0.1]).collect();
     let serie2 = Serie::new(v2.into_iter(), "#00ff00").unwrap();
     let series = vec![serie1, serie2];
 

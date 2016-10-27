@@ -83,8 +83,7 @@ macro_rules! formula {
 
 #[test]
 fn macros_test() {
-    let points = formula!(y(x) = -(0.64f64 - x.powi(2)).sqrt(), x = [0.8f64, 0.8f64; 0.01]);
-
+    let points = formula!(y(x) = x.powi(2), x = [1, 1; 0.1]);
     let pp: Vec<_> = points.collect();
-    assert_eq!(pp, vec![(0f64, 0f64)]);
+    assert_eq!(pp, vec![(1f64, 1f64)]);
 }
